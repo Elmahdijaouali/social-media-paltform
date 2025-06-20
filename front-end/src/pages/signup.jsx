@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
 // import { FaUserPlus } from "react-icons/fa"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function SignupForm({ onSwitchToLogin }) {
@@ -19,8 +19,22 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const { signup, signupStatus, signupError } = useAuth()
+  const navigate = useNavigate()
   
   const isLoading = signupStatus === "pending"
+  const isSuccess = signupStatus === "success"
+
+  // Redirect to login page after successful signup
+  useEffect(() => {
+    if (isSuccess) {
+      // Wait a moment to show the success message, then redirect
+      const timer = setTimeout(() => {
+        navigate("/?signup=success", { replace: true })
+      }, 1500) // 1.5 seconds delay to show success message
+
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, navigate])
 
   const validateForm = () => {
     const newErrors = {}
@@ -75,6 +89,12 @@ export default function SignupForm({ onSwitchToLogin }) {
         [name]: undefined,
       }))
     }
+    
+    // Clear general error when user starts typing in any field
+    if (signupError) {
+      // Reset the mutation to clear the error
+      // This will be handled by React Query automatically when a new mutation starts
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -90,6 +110,21 @@ export default function SignupForm({ onSwitchToLogin }) {
 
   // Show signup error if it exists
   const generalError = signupError?.response?.data?.message || signupError?.message
+  
+  // Check for specific field errors from the API response
+  const apiErrors = signupError?.response?.data?.errors || {}
+  
+  // Combine local validation errors with API errors
+  const allErrors = {
+    ...errors,
+    ...apiErrors
+  }
+  
+  // Check if the error is specifically about username conflict
+  const isUsernameConflict = generalError && (
+    generalError.toLowerCase().includes('username') && 
+    generalError.toLowerCase().includes('already exists')
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -106,7 +141,9 @@ export default function SignupForm({ onSwitchToLogin }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {generalError && <Alert type="error">{generalError}</Alert>}
+            {isSuccess && <Alert type="success">Account created successfully! Welcome aboard!</Alert>}
+            {generalError && !isUsernameConflict && <Alert type="error">{generalError}</Alert>}
+            {isUsernameConflict && <Alert type="error">This username is already taken. Please choose a different one.</Alert>}
             <div>
               <label className="block text-darkgrey font-medium mb-1">First Name</label>
               <div className="relative">
@@ -118,11 +155,11 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.firstname}
                   onChange={handleInputChange}
                   placeholder="Enter your first name"
-                  error={!!errors.firstname}
+                  error={!!allErrors.firstname}
                   className="pl-10"
                 />
               </div>
-              {errors.firstname && <p className="text-red text-sm mt-1">{errors.firstname}</p>}
+              {allErrors.firstname && <p className="text-red text-sm mt-1">{allErrors.firstname}</p>}
             </div>
             <div>
               <label className="block text-darkgrey font-medium mb-1">Last Name</label>
@@ -135,11 +172,11 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.lastname}
                   onChange={handleInputChange}
                   placeholder="Enter your last name"
-                  error={!!errors.lastname}
+                  error={!!allErrors.lastname}
                   className="pl-10"
                 />
               </div>
-              {errors.lastname && <p className="text-red text-sm mt-1">{errors.lastname}</p>}
+              {allErrors.lastname && <p className="text-red text-sm mt-1">{allErrors.lastname}</p>}
             </div>
             <div>
               <label className="block text-darkgrey font-medium mb-1">Username</label>
@@ -152,11 +189,11 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.username}
                   onChange={handleInputChange}
                   placeholder="Choose a username"
-                  error={!!errors.username}
+                  error={!!allErrors.username}
                   className="pl-10"
                 />
               </div>
-              {errors.username && <p className="text-red text-sm mt-1">{errors.username}</p>}
+              {allErrors.username && <p className="text-red text-sm mt-1">{allErrors.username}</p>}
             </div>
             <div>
               <label className="block text-darkgrey font-medium mb-1">Password</label>
@@ -170,7 +207,7 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Create a password"
-                  error={!!errors.password}
+                  error={!!allErrors.password}
                   className="pl-10 pr-10"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -184,7 +221,7 @@ export default function SignupForm({ onSwitchToLogin }) {
                   />
                 </span>
               </div>
-              {errors.password && <p className="text-red text-sm mt-1">{errors.password}</p>}
+              {allErrors.password && <p className="text-red text-sm mt-1">{allErrors.password}</p>}
             </div>
             <Button type="submit" isLoading={isLoading} loadingText="Creating account...">Create Account</Button>
             <p className="text-sm text-grey text-center">

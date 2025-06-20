@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import Checkbox from "@/components/ui/Checkbox"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function LoginForm({ onSwitchToSignup }) {
@@ -16,9 +16,31 @@ export default function LoginForm({ onSwitchToSignup }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+  const [showSignupSuccess, setShowSignupSuccess] = useState(false)
   const { login, loginStatus, loginError } = useAuth()
+  const location = useLocation()
   
   const isLoading = loginStatus === "pending"
+
+  // Check for signup success parameter and show success message
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const signupSuccess = searchParams.get('signup')
+    if (signupSuccess === 'success') {
+      setShowSignupSuccess(true)
+      
+      // Hide the success message after 20 seconds
+      const timer = setTimeout(() => {
+        setShowSignupSuccess(false)
+      }, 20000) // 20 seconds
+
+      return () => clearTimeout(timer)
+    }
+  }, [location.search])
+
+  const dismissSuccessMessage = () => {
+    setShowSignupSuccess(false)
+  }
 
   const validateForm = () => {
     const newErrors = {}
@@ -87,6 +109,23 @@ export default function LoginForm({ onSwitchToSignup }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
+            {showSignupSuccess && (
+              <div className="relative">
+                <Alert type="success">
+                  Account created successfully! You can now sign in with your credentials.
+                </Alert>
+                <button
+                  type="button"
+                  onClick={dismissSuccessMessage}
+                  className="absolute top-2 right-2 text-green-600 hover:text-green-800 transition-colors"
+                  aria-label="Dismiss success message"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
             {generalError && <Alert type="error">{generalError}</Alert>}
             <div>
               <label className="block text-darkgrey font-medium mb-1">Username</label>
