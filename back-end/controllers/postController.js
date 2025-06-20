@@ -1,70 +1,248 @@
 import Post from "../models/Post.js";
+import User from "../models/User.js";
+import Like from "../models/Like.js";
+import Comment from "../models/Comment.js";
 
-// create 
+// create Post
 export const createPost = async (req, res) => {
   try {
-    const newPost = new Post(req.body);
-    const savedPost = await newPost.save(); 
-    res.status(201).json(savedPost);
+    const { userId, desc, image } = req.body;
+    const newPost = new Post({
+      userId,
+      desc,
+      image
+    });
+    
+    const savedPost = await newPost.save();
+    const populatedPost = await Post.findById(savedPost._id)
+      .populate("userId", "username profile cover firstname lastname");
+    
+    res.status(201).json(populatedPost);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// get a post by ID
+// get post by ID 
 export const getPost = async (req, res) => {
-  const userId = req.params.id;
   try {
-    const post = await Post.findById(userId);
-    res.status(200).json(post);
+    const post = await Post.findById(req.params.id)
+      .populate("userId", "username profile cover firstname lastname");
+    
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    const likes = await Like.find({ post: post._id })
+      .populate("user", "username profile firstname lastname");
+    
+    const comments = await Comment.find({ post: post._id })
+      .populate("user", "username profile firstname lastname")
+      .sort({ createdAt: -1 });
+    
+    const postWithDetails = {
+      ...post.toObject(),
+      likes,
+      comments
+    };
+    
+    res.status(200).json(postWithDetails);
   } catch (error) {
-    res.status(500).json(error.message);
+    res.status(500).json({ message: error.message });
   }
 };
 
 // update post
 export const updatePost = async (req, res) => {
-  const postId = req.params.id;
-  const userId = req.body.userId;
   try {
-    const post = await Post.findById(postId);
-    if (post.userId.toString() !== userId) {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    if (post.userId.toString() !== req.body.userId) {
       return res.status(403).json("You can only update your own posts");
     }
-    const updatedPost = await Post.findByIdAndUpdate(postId, {
-      $set: req.body
-    }, { new: true });
+    
+    const updatedPost = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    ).populate("userId", "username profile cover firstname lastname");
+    
     res.status(200).json(updatedPost);
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({ message: err.message });
   }
 };
 
 // delete post
 export const deletePost = async (req, res) => {
-  const postId = req.params.id;
-  const userId = req.body.userId;
   try {
-    const post = await Post.findById(postId);
-    if (post.userId.toString() !== userId) {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    if (post.userId.toString() !== req.body.userId) {
       return res.status(403).json("You can only delete your own posts");
     }
+    
+    await Like.deleteMany({ post: post._id });
+    await Comment.deleteMany({ post: post._id });
+    
     await post.deleteOne();
-    res.status(200).json("Post deleted successfully");
+    res.status(200).json({ message: "Post deleted successfully" });
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({ message: err.message });
   }
 };
 
-
-// get timeline posts
+// get all posts 
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("userId", "username profile")
-      .populate("comments.userId", "username profile")
-      .sort({ createdAt: -1 }); 
-    res.status(200).json(posts);
+      .populate("userId", "username profile cover firstname lastname")
+      .sort({ createdAt: -1 });
+    
+    // get likes and comments for each post
+    const postsWithDetails = await Promise.all(posts.map(async post => {
+      const likes = await Like.find({ post: post._id })
+        .populate("user", "username profile firstname lastname");
+      
+      const comments = await Comment.find({ post: post._id })
+        .populate("user", "username profile firstname lastname")
+        .sort({ createdAt: -1 });
+      
+      return {
+        ...post.toObject(),
+        likes,
+        comments
+      };
+    }));
+    
+    res.status(200).json(postsWithDetails);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// like post
+export const likePost = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const postId = req.params.id;
+    
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // exists
+    const existingLike = await Like.findOne({ user: userId, post: postId });
+    
+    if (existingLike) {
+      // unlike 
+      await Like.findByIdAndDelete(existingLike._id);
+    } else {
+      // like 
+      const newLike = new Like({
+        user: userId,
+        post: postId
+      });
+      await newLike.save();
+    }
+    
+    // updated likes count and list
+    const updatedLikes = await Like.find({ post: postId })
+      .populate("user", "username profile firstname lastname");
+    
+    res.status(200).json(updatedLikes);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// add comment
+export const addComment = async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+    const postId = req.params.id;
+    
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    const newComment = new Comment({
+      user: userId,
+      post: postId,
+      text
+    });
+    
+    const savedComment = await newComment.save();
+    const populatedComment = await Comment.findById(savedComment._id)
+      .populate("user", "username profile firstname lastname");
+    
+    res.status(201).json(populatedComment);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// delete comment
+export const deleteComment = async (req, res) => {
+  try {
+    const { commentId } = req.body;
+    const postId = req.params.id;
+    
+    const comment = await Comment.findOne({ 
+      _id: commentId, 
+      post: postId 
+    }).populate("user", "_id");
+    
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
+    // check if the uuser deleting iss the comment "author" or post "owner" 
+    const post = await Post.findById(postId);
+    if (comment.user._id.toString() !== req.body.userId && 
+        post.userId.toString() !== req.body.userId) {
+      return res.status(403).json({ message: "Unauthorized to delete this comment" });
+    }
+    
+    await Comment.findByIdAndDelete(commentId);
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// get user posts
+export const getUserPosts = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const posts = await Post.find({ userId })
+      .populate("userId", "username profile cover firstname lastname")
+      .sort({ createdAt: -1 });
+    
+    const postsWithDetails = await Promise.all(posts.map(async post => {
+      const likes = await Like.find({ post: post._id })
+        .populate("user", "username profile firstname lastname");
+      
+      const comments = await Comment.find({ post: post._id })
+        .populate("user", "username profile firstname lastname")
+        .sort({ createdAt: -1 });
+      
+      return {
+        ...post.toObject(),
+        likes,
+        comments
+      };
+    }));
+    
+    res.status(200).json(postsWithDetails);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
