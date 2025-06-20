@@ -24,7 +24,7 @@ router.delete('/destoryAccount' , verifyAuth , destroyAccount )
 router.put('/updatePassword' , verifyAuth , updatePassword)
 router.put('/updateProfilePicture' , verifyAuth ,  upload.single('image') , updateProfilePicture )
 router.put('/updateCoverPicture' , verifyAuth ,  upload.single('image') , updateCoverPicture )
-router.put('/updateInfomrationProfile' , updateInfomrationProfile)
+router.put('/updateInfomrationProfile' , verifyAuth ,  updateInfomrationProfile)
 // router.delete('/logout')
 
 

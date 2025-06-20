@@ -5,6 +5,7 @@ dotenv.config();
 import mongoose from 'mongoose';
 import postRoute from './routes/postRoute.js';
 import userRoute from './routes/userRoute.js';
+import cors from 'cors' ;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json()); 
 app.use('/uploads', express.static('uploads'));
 
+
+app.use(cors());
 const prefex = '/api/v1'
 mongoose.connect(
   process.env.MONGO_URL || 'mongodb://localhost:27017/social_media_db' 
