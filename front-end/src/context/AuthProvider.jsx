@@ -17,7 +17,7 @@ const loginUser = async ({ username, password }) => {
 };
 
 const signupUser = async ({ firstname, lastname, username, password }) => {
-  const response = await axios.post(`${API_BASE}/signup`, {
+  const response = await axios.post(`${API_BASE}/register`, {
     username,
     password,
     firstname,
@@ -40,16 +40,37 @@ const logoutUser = async (token) => {
 
 // Fetch user info from backend using token
 const fetchUser = async (token) => {
-  const response = await axios.get(`${API_BASE}/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data.user;
+  if (!token) {
+    throw new Error("No token provided");
+  }
+  
+  try {
+    const response = await axios.get(`${API_BASE}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    // Handle different response structures
+    const userData = response.data.user || response.data;
+    
+    if (!userData) {
+      throw new Error("No user data received from server");
+    }
+    
+    return userData;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    throw error;
+  }
 };
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [token, setToken] = useState(() => {
+    const storedToken = localStorage.getItem("token");
+    // Prevent "undefined" string tokens
+    return storedToken && storedToken !== "undefined" ? storedToken : null;
+  });
   const queryClient = useQueryClient();
 
   // Fetch user info with React Query
@@ -62,9 +83,11 @@ export const AuthProvider = ({ children }) => {
   } = useQuery({
     queryKey: ["user", token],
     queryFn: () => fetchUser(token),
-    enabled: !!token,
+    enabled: !!token && token !== "undefined",
     retry: false,
-    onError: () => {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    onError: (error) => {
+      console.error("User fetch error:", error);
       setToken(null);
       localStorage.removeItem("token");
     },
@@ -98,7 +121,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("token");
       queryClient.removeQueries({ queryKey: ["user"] });
     },
-    onError: (e) => {
+    onError: () => {
       setToken(null);
       localStorage.removeItem("token");
       queryClient.removeQueries({ queryKey: ["user"] });

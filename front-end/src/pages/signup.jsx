@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
-import { FaUserPlus } from "react-icons/fa"
-import { Link } from "react-router-dom"
+// import { FaUserPlus } from "react-icons/fa"
+import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function SignupForm({ onSwitchToLogin }) {
@@ -18,8 +18,24 @@ export default function SignupForm({ onSwitchToLogin }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { signupUser } = useAuth()
+  const { signup, signupStatus, signupError } = useAuth()
+  const navigate = useNavigate()
+  
+  const isLoading = signupStatus === "pending"
+  const isSuccess = signupStatus === "success"
+
+  // Redirect to login page after successful signup
+  useEffect(() => {
+    if (isSuccess) {
+      // Wait a moment to show the success message, then redirect
+      const timer = setTimeout(() => {
+        navigate("/?signup=success", { replace: true })
+      }, 1500) // 1.5 seconds delay to show success message
+
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, navigate])
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -73,6 +89,12 @@ export default function SignupForm({ onSwitchToLogin }) {
         [name]: undefined,
       }))
     }
+    
+    // Clear general error when user starts typing in any field
+    if (signupError) {
+      // Reset the mutation to clear the error
+      // This will be handled by React Query automatically when a new mutation starts
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -82,43 +104,95 @@ export default function SignupForm({ onSwitchToLogin }) {
       return
     }
 
-    setIsLoading(true)
     setErrors({})
-
-    try {
-      signupUser(formData)
-
-      // For demo purposes, show success
-      alert("Account created successfully! Please check your email to verify your account.")
-    } catch (error) {
-      setErrors({
-        general: "Signup failed. Please try again later.",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    signup(formData)
   }
 
+  // Show signup error if it exists
+  const generalError = signupError?.response?.data?.message || signupError?.message
+  
+  // Check for specific field errors from the API response
+  const apiErrors = signupError?.response?.data?.errors || {}
+  
+  // Combine local validation errors with API errors
+  const allErrors = {
+    ...errors,
+    ...apiErrors
+  }
+  
+  // Check if the error is specifically about username conflict
+  const isUsernameConflict = generalError && (
+    generalError.toLowerCase().includes('username') && 
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already taken') ||
+     generalError.toLowerCase().includes('already in use'))
+  )
+  
+  // Check if the error is about user already existing (email/username)
+  const isUserExists = generalError && (
+    generalError.toLowerCase().includes('user') && 
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already registered'))
+  )
+  
+  // Get user-friendly error message
+  const getUserFriendlyError = () => {
+    if (isUsernameConflict) {
+      return "This username is already taken. Please choose a different username.";
+    }
+    if (isUserExists) {
+      return "An account with these details already exists. Please try signing in instead.";
+    }
+    if (generalError) {
+      // Handle other common error patterns
+      if (generalError.toLowerCase().includes('email') && generalError.toLowerCase().includes('already')) {
+        return "This email address is already registered. Please use a different email or try signing in.";
+      }
+      if (generalError.toLowerCase().includes('password')) {
+        return "There was an issue with your password. Please check your password requirements.";
+      }
+      if (generalError.toLowerCase().includes('network') || generalError.toLowerCase().includes('connection')) {
+        return "Unable to connect to the server. Please check your internet connection and try again.";
+      }
+      // Return the original error if no specific pattern matches
+      return generalError;
+    }
+    return null;
+  }
+  
+  const userFriendlyError = getUserFriendlyError()
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 backdrop-blur">
         {/* Header */}
         <div className="flex flex-col items-center mb-8 space-y-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-blue-400 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple to-blue flex items-center justify-center">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 14v2a4 4 0 01-8 0v-2m8 0a4 4 0 00-8 0m8 0V9a4 4 0 10-8 0v5m8 0a4 4 0 00-8 0M12 7v.01M12 17v.01" /></svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-          <p className="text-gray-600 text-center">Sign up to get started with your account</p>
+          <h2 className="text-3xl font-bold text-darkgrey">Create Account</h2>
+          <p className="text-grey text-center">Sign up to get started with your account</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {errors.general && <Alert type="error">{errors.general}</Alert>}
+            {isSuccess && <Alert type="success">Account created successfully! Welcome aboard!</Alert>}
+            {userFriendlyError && (
+              <div className="space-y-2">
+                <Alert type="error">{userFriendlyError}</Alert>
+                {(isUsernameConflict || isUserExists) && (
+                  <div className="text-sm text-grey bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <p className="font-medium text-darkgrey mb-1">Already have an account?</p>
+                    <p>If you've signed up before, you can <button type="button" className="text-blue font-medium hover:underline" onClick={onSwitchToLogin}>sign in here</button> instead.</p>
+                  </div>
+                )}
+              </div>
+            )}
             <div>
-              <label className="block text-gray-900 font-medium mb-1">First Name</label>
+              <label className="block text-darkgrey font-medium mb-1">First Name</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-grey">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
                 </span>
                 <Input
@@ -126,16 +200,16 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.firstname}
                   onChange={handleInputChange}
                   placeholder="Enter your first name"
-                  error={!!errors.firstname}
+                  error={!!allErrors.firstname}
                   className="pl-10"
                 />
               </div>
-              {errors.firstname && <p className="text-red-500 text-sm mt-1">{errors.firstname}</p>}
+              {allErrors.firstname && <p className="text-red text-sm mt-1">{allErrors.firstname}</p>}
             </div>
             <div>
-              <label className="block text-gray-900 font-medium mb-1">Last Name</label>
+              <label className="block text-darkgrey font-medium mb-1">Last Name</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-grey">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
                 </span>
                 <Input
@@ -143,16 +217,16 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.lastname}
                   onChange={handleInputChange}
                   placeholder="Enter your last name"
-                  error={!!errors.lastname}
+                  error={!!allErrors.lastname}
                   className="pl-10"
                 />
               </div>
-              {errors.lastname && <p className="text-red-500 text-sm mt-1">{errors.lastname}</p>}
+              {allErrors.lastname && <p className="text-red text-sm mt-1">{allErrors.lastname}</p>}
             </div>
             <div>
-              <label className="block text-gray-900 font-medium mb-1">Username</label>
+              <label className="block text-darkgrey font-medium mb-1">Username</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-grey">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
                 </span>
                 <Input
@@ -160,16 +234,16 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.username}
                   onChange={handleInputChange}
                   placeholder="Choose a username"
-                  error={!!errors.username}
+                  error={!!allErrors.username}
                   className="pl-10"
                 />
               </div>
-              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+              {allErrors.username && <p className="text-red text-sm mt-1">{allErrors.username}</p>}
             </div>
             <div>
-              <label className="block text-gray-900 font-medium mb-1">Password</label>
+              <label className="block text-darkgrey font-medium mb-1">Password</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-grey">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 17a2 2 0 002-2v-2a2 2 0 00-2-2 2 2 0 00-2 2v2a2 2 0 002 2zm6-6V9a6 6 0 10-12 0v2a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2z" /></svg>
                 </span>
                 <Input
@@ -178,26 +252,26 @@ export default function SignupForm({ onSwitchToLogin }) {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Create a password"
-                  error={!!errors.password}
+                  error={!!allErrors.password}
                   className="pl-10 pr-10"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2">
                   <IconButton
                     onClick={() => setShowPassword((v) => !v)}
                     icon={showPassword ? (
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
+                      <svg className="w-5 h-5 text-grey" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
                     ) : (
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.5 0a9.77 9.77 0 01-1.5 3.5M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
+                      <svg className="w-5 h-5 text-grey" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.5 0a9.77 9.77 0 01-1.5 3.5M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
                     )}
                   />
                 </span>
               </div>
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              {allErrors.password && <p className="text-red text-sm mt-1">{allErrors.password}</p>}
             </div>
             <Button type="submit" isLoading={isLoading} loadingText="Creating account...">Create Account</Button>
-            <p className="text-sm text-gray-700 text-center">
+            <p className="text-sm text-grey text-center">
               Already have an account?{' '}
-              <button type="button" className="text-blue-600 font-medium hover:underline" onClick={onSwitchToLogin}>
+              <button type="button" className="text-blue font-medium hover:underline" onClick={onSwitchToLogin}>
                 <Link to="/">
                   Sign in here
                 </Link>

@@ -4,3 +4,49 @@
 body {
   font-family: "Poppins", sans-serif;
 }
+
+:root {
+  /* main colors (main theme) */
+  --purple: #7b00e7;
+  --lightpurple: #9336e3;
+  --blue: #0066ff; /* for thumbs up too */
+  --lightblue: #438cfb;
+  --paleblue: #99c0fb;
+  /* for alerts */
+  --red: #d20000; /* for like buttons too*/
+  --lightred: #f4b8b8;
+  --orange: #fe9d00;
+  --green: #00e02d;
+  --lightgreen: #9fffb3;
+  /* maybe for some very slight decorations like badges for example */
+  --yellow: #f4e300;
+  /* secondary colors */
+  --teal: #00d39b;
+  --white: #fff;
+  --grey: #888888;
+  --darkgrey: #2f2f2f;
+  --black: #000000;
+  --silver: #c0c0c0;
+  --light: #a1a1a1;
+}
+
+@theme {
+  --color-purple: #7b00e7;
+  --color-lightpurple: #9336e3;
+  --color-blue: #0066ff;
+  --color-lightblue: #438cfb;
+  --color-paleblue: #99c0fb;
+  --color-red: #d20000;
+  --color-lightred: #f4b8b8;
+  --color-orange: #fe9d00;
+  --color-green: #00e02d;
+  --color-lightgreen: #9fffb3;
+  --color-yellow: #f4e300;
+  --color-teal: #00d39b;
+  --color-white: #fff;
+  --color-grey: #888888;
+  --color-darkgrey: #2f2f2f;
+  --color-black: #000000;
+  --color-silver: #c0c0c0;
+  --color-light: #a1a1a1;
+}
