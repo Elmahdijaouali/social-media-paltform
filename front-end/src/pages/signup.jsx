@@ -15,25 +15,22 @@ import {
   AlertIcon,
   Text,
   Link,
-  Checkbox,
   VStack,
   Spinner,
   useColorModeValue,
 } from "@chakra-ui/react"
-import { ViewIcon, ViewOffIcon, LockIcon, AtSignIcon, EmailIcon } from "@chakra-ui/icons"
+import { ViewIcon, ViewOffIcon, LockIcon, AtSignIcon } from "@chakra-ui/icons"
 import { FaUserPlus } from "react-icons/fa"
 
 export default function SignupForm({ onSwitchToLogin }) {
   const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
     username: "",
-    email: "",
     password: "",
-    confirmPassword: "",
-    agreeToTerms: false,
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const bgGradient = useColorModeValue("linear(to-br, green.50, blue.100)", "linear(to-br, green.900, blue.900)")
@@ -43,6 +40,20 @@ export default function SignupForm({ onSwitchToLogin }) {
   const validateForm = () => {
     const newErrors = {}
 
+    // First name validation
+    if (!formData.firstname.trim()) {
+      newErrors.firstname = "First name is required"
+    } else if (formData.firstname.length < 2) {
+      newErrors.firstname = "First name must be at least 2 characters long"
+    }
+
+    // Last name validation
+    if (!formData.lastname.trim()) {
+      newErrors.lastname = "Last name is required"
+    } else if (formData.lastname.length < 2) {
+      newErrors.lastname = "Last name must be at least 2 characters long"
+    }
+
     // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Username is required"
@@ -50,13 +61,6 @@ export default function SignupForm({ onSwitchToLogin }) {
       newErrors.username = "Username must be at least 3 characters long"
     } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
       newErrors.username = "Username can only contain letters, numbers, and underscores"
-    }
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
     }
 
     // Password validation
@@ -68,27 +72,15 @@ export default function SignupForm({ onSwitchToLogin }) {
       newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number"
     }
 
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password"
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match"
-    }
-
-    // Terms validation
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = "You must agree to the terms and conditions"
-    }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }))
 
     // Clear error when user starts typing
@@ -115,7 +107,7 @@ export default function SignupForm({ onSwitchToLogin }) {
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       // Simulate signup logic here
-      console.log("Signup attempt:", { ...formData, password: "[HIDDEN]", confirmPassword: "[HIDDEN]" })
+      console.log("Signup attempt:", { ...formData, password: "[HIDDEN]" })
 
       // For demo purposes, show success
       alert("Account created successfully! Please check your email to verify your account.")
@@ -172,6 +164,56 @@ export default function SignupForm({ onSwitchToLogin }) {
               </Alert>
             )}
 
+            <FormControl isInvalid={errors.firstname}>
+              <FormLabel color="gray.700" fontWeight="medium">
+                First Name
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <AtSignIcon color="gray.400" />
+                </InputLeftElement>
+                <Input
+                  name="firstname"
+                  value={formData.firstname}
+                  onChange={handleInputChange}
+                  placeholder="Enter your first name"
+                  size="lg"
+                  focusBorderColor={errors.firstname ? "red.500" : "blue.500"}
+                  errorBorderColor="red.500"
+                />
+              </InputGroup>
+              {errors.firstname && (
+                <Text color="red.500" fontSize="sm" mt={1}>
+                  {errors.firstname}
+                </Text>
+              )}
+            </FormControl>
+
+            <FormControl isInvalid={errors.lastname}>
+              <FormLabel color="gray.700" fontWeight="medium">
+                Last Name
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <AtSignIcon color="gray.400" />
+                </InputLeftElement>
+                <Input
+                  name="lastname"
+                  value={formData.lastname}
+                  onChange={handleInputChange}
+                  placeholder="Enter your last name"
+                  size="lg"
+                  focusBorderColor={errors.lastname ? "red.500" : "blue.500"}
+                  errorBorderColor="red.500"
+                />
+              </InputGroup>
+              {errors.lastname && (
+                <Text color="red.500" fontSize="sm" mt={1}>
+                  {errors.lastname}
+                </Text>
+              )}
+            </FormControl>
+
             <FormControl isInvalid={errors.username}>
               <FormLabel color="gray.700" fontWeight="medium">
                 Username
@@ -193,32 +235,6 @@ export default function SignupForm({ onSwitchToLogin }) {
               {errors.username && (
                 <Text color="red.500" fontSize="sm" mt={1}>
                   {errors.username}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.email}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                Email Address
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <EmailIcon color="gray.400" />
-                </InputLeftElement>
-                <Input
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Enter your email"
-                  size="lg"
-                  focusBorderColor={errors.email ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
-                />
-              </InputGroup>
-              {errors.email && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.email}
                 </Text>
               )}
             </FormControl>
@@ -253,66 +269,6 @@ export default function SignupForm({ onSwitchToLogin }) {
               {errors.password && (
                 <Text color="red.500" fontSize="sm" mt={1}>
                   {errors.password}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.confirmPassword}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                Confirm Password
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <LockIcon color="gray.400" />
-                </InputLeftElement>
-                <Input
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="Confirm your password"
-                  size="lg"
-                  focusBorderColor={errors.confirmPassword ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
-                />
-                <InputRightElement>
-                  <IconButton
-                    variant="ghost"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                  />
-                </InputRightElement>
-              </InputGroup>
-              {errors.confirmPassword && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.confirmPassword}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.agreeToTerms}>
-              <Checkbox
-                name="agreeToTerms"
-                isChecked={formData.agreeToTerms}
-                onChange={handleInputChange}
-                colorScheme={errors.agreeToTerms ? "red" : "blue"}
-                alignItems="flex-start"
-              >
-                <Text fontSize="sm" color="gray.600" ml={2}>
-                  I agree to the{" "}
-                  <Link color="blue.500" fontWeight="medium">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link color="blue.500" fontWeight="medium">
-                    Privacy Policy
-                  </Link>
-                </Text>
-              </Checkbox>
-              {errors.agreeToTerms && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.agreeToTerms}
                 </Text>
               )}
             </FormControl>
