@@ -123,8 +123,44 @@ export default function SignupForm({ onSwitchToLogin }) {
   // Check if the error is specifically about username conflict
   const isUsernameConflict = generalError && (
     generalError.toLowerCase().includes('username') && 
-    generalError.toLowerCase().includes('already exists')
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already taken') ||
+     generalError.toLowerCase().includes('already in use'))
   )
+  
+  // Check if the error is about user already existing (email/username)
+  const isUserExists = generalError && (
+    generalError.toLowerCase().includes('user') && 
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already registered'))
+  )
+  
+  // Get user-friendly error message
+  const getUserFriendlyError = () => {
+    if (isUsernameConflict) {
+      return "This username is already taken. Please choose a different username.";
+    }
+    if (isUserExists) {
+      return "An account with these details already exists. Please try signing in instead.";
+    }
+    if (generalError) {
+      // Handle other common error patterns
+      if (generalError.toLowerCase().includes('email') && generalError.toLowerCase().includes('already')) {
+        return "This email address is already registered. Please use a different email or try signing in.";
+      }
+      if (generalError.toLowerCase().includes('password')) {
+        return "There was an issue with your password. Please check your password requirements.";
+      }
+      if (generalError.toLowerCase().includes('network') || generalError.toLowerCase().includes('connection')) {
+        return "Unable to connect to the server. Please check your internet connection and try again.";
+      }
+      // Return the original error if no specific pattern matches
+      return generalError;
+    }
+    return null;
+  }
+  
+  const userFriendlyError = getUserFriendlyError()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -142,8 +178,17 @@ export default function SignupForm({ onSwitchToLogin }) {
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
             {isSuccess && <Alert type="success">Account created successfully! Welcome aboard!</Alert>}
-            {generalError && !isUsernameConflict && <Alert type="error">{generalError}</Alert>}
-            {isUsernameConflict && <Alert type="error">This username is already taken. Please choose a different one.</Alert>}
+            {userFriendlyError && (
+              <div className="space-y-2">
+                <Alert type="error">{userFriendlyError}</Alert>
+                {(isUsernameConflict || isUserExists) && (
+                  <div className="text-sm text-grey bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <p className="font-medium text-darkgrey mb-1">Already have an account?</p>
+                    <p>If you've signed up before, you can <button type="button" className="text-blue font-medium hover:underline" onClick={onSwitchToLogin}>sign in here</button> instead.</p>
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <label className="block text-darkgrey font-medium mb-1">First Name</label>
               <div className="relative">
