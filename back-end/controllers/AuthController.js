@@ -1,4 +1,4 @@
-import User from './models/User.js' 
+import User from '../models/User.js' 
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
@@ -31,10 +31,10 @@ const login = async ( req , res ) => {
 
 const register = async ( req , res ) => {
 
-    const { username , firstname , lastname , password } = req.body
+    const { username , firstname , bio , lastname , password } = req.body
 
     try{
-        if(!username || !password || !firstname || !lastname){
+        if(!username || !password || !firstname || !lastname || !bio){
             return res.json({ error : 'please fill all fields' })
         }
 
@@ -46,7 +46,7 @@ const register = async ( req , res ) => {
 
         const  hashedPassword = await bcrypt.hash(password , 10)
 
-        const user = new User({username , firstname , lastname , password : hashedPassword })
+        const user = new User({username , firstname , lastname , bio  , password : hashedPassword })
 
         await user.save()
 
@@ -103,17 +103,87 @@ const updatePassword = async ( req , res ) => {
    }
 }
 
-const updateProfile = async ( req , res ) => {
-    const { username , firstname , lastname  } = req.body 
+const updateInofmrationProfile = async ( req , res ) => {
+    const { username , firstname , lastname  , bio  } = req.body 
      try{
       const user = await User.findById(req.user.id)
       user.username = username
+      user.firstname = firstname
+      user.lastname = lastname
+      user.bio = bio
+      await user.save()
+      res.json({
+         message : "profile updated successfully"
+      })
       
      }catch(err){
       console.log({
          error : 'error ' + err.message
       })
      }
+}
+
+const logout = async (req , res ) => {
+     try{
+       
+       res.json( { message : 'logged out successfully' } )
+     }catch(err){
+         console.log(err)
+         res.json({
+            error : 'error ' + err.message
+         })
+     }
+}
+
+const updatePrfile = async ( req , res ) =>{
+     const { profilePicture } = req.body    
+     try{
+     
+        const user = await User.findById(req.user.id)
+        user.profilePicture = profilePicture
+        user.save()
+
+        res.json({
+            message : "profile picture updated successfully"
+        })
+
+     }catch(err){
+         console.log(err) 
+         res.json()
+     }
+}
+
+const updateCover = async ( req , res ) =>{
+     const { cover  } = req.body    
+     try{
+     
+        const user = await User.findById(req.user.id)
+        user.cover = cover 
+
+        user.save()
+
+        res.json( {
+            message : 'cover updated successfully'
+        })
+     }catch(err){
+         console.log(err) 
+         res.json()
+     }
+}
+
+
+const getUser =async (req , res ) => {
+
+   try{
+      const user = await User.findById(req.user.id)
+      res.json(user)
+
+   }catch(err){
+     console.log(err)
+     res.json( {
+         error : 'error ' + err.message
+     })
+   }
 }
 
 
