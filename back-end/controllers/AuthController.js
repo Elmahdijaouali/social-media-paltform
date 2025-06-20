@@ -34,7 +34,7 @@ const register = async ( req , res ) => {
     const { username , firstname , bio , lastname , password } = req.body
 
     try{
-        if(!username || !password || !firstname || !lastname || !bio){
+        if(!username || !password || !firstname || !lastname ){
             return res.json({ error : 'please fill all fields' })
         }
 

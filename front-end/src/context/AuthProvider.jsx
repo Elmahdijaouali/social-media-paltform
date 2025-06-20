@@ -16,10 +16,12 @@ const loginUser = async ({ username, password }) => {
   return response.data;
 };
 
-const signupUser = async ({ username, password }) => {
+const signupUser = async ({ firstname, lastname, username, password }) => {
   const response = await axios.post(`${API_BASE}/signup`, {
     username,
     password,
+    firstname,
+    lastname,
   });
   return response.data;
 };

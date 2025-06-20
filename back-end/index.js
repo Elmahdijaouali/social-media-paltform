@@ -12,7 +12,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json()); 
 
 const prefex = '/api/v1'
-mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(
+    "mongodb+srv://devmehdi0:Ckaq2LPsMuIm5tpa@cluster0.teskxje.mongodb.net/"
+    , { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
   .catch((error) => console.log(error.message));
 
