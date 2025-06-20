@@ -1,26 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
-  IconButton,
-  Alert,
-  AlertIcon,
-  Text,
-  Link,
-  VStack,
-  Spinner,
-  useColorModeValue,
-} from "@chakra-ui/react"
-import { ViewIcon, ViewOffIcon, LockIcon, AtSignIcon } from "@chakra-ui/icons"
+import Button from "@/components/ui/Button"
+import Input from "@/components/ui/Input"
+import Alert from "@/components/ui/Alert"
+import IconButton from "@/components/ui/IconButton"
 import { FaUserPlus } from "react-icons/fa"
+import { Link } from "react-router-dom"
 
 export default function SignupForm({ onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -32,10 +18,6 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
-  const bgGradient = useColorModeValue("linear(to-br, green.50, blue.100)", "linear(to-br, green.900, blue.900)")
-  const cardBg = useColorModeValue("white", "gray.800")
-  const iconBg = useColorModeValue("linear(45deg, green.400, blue.400)", "linear(45deg, green.600, blue.600)")
 
   const validateForm = () => {
     const newErrors = {}
@@ -121,188 +103,112 @@ export default function SignupForm({ onSwitchToLogin }) {
   }
 
   return (
-    <Box minH="100vh" bgGradient={bgGradient} display="flex" alignItems="center" justifyContent="center" p={4}>
-      <Box
-        bg={cardBg}
-        p={8}
-        rounded="2xl"
-        shadow="2xl"
-        w="full"
-        maxW="md"
-        backdropFilter="blur(10px)"
-        border="1px"
-        borderColor="whiteAlpha.200"
-      >
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200 backdrop-blur">
         {/* Header */}
-        <VStack spacing={4} mb={8}>
-          <Box
-            w={16}
-            h={16}
-            rounded="full"
-            bgGradient={iconBg}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Box as={FaUserPlus} color="white" boxSize={8} />
-          </Box>
-          <Text fontSize="3xl" fontWeight="bold" color="gray.900">
-            Create Account
-          </Text>
-          <Text color="gray.600" textAlign="center">
-            Sign up to get started with your account
-          </Text>
-        </VStack>
+        <div className="flex flex-col items-center mb-8 space-y-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-blue-400 flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 14v2a4 4 0 01-8 0v-2m8 0a4 4 0 00-8 0m8 0V9a4 4 0 10-8 0v5m8 0a4 4 0 00-8 0M12 7v.01M12 17v.01" /></svg>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
+          <p className="text-gray-600 text-center">Sign up to get started with your account</p>
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <VStack spacing={4}>
-            {errors.general && (
-              <Alert status="error" rounded="md">
-                <AlertIcon />
-                {errors.general}
-              </Alert>
-            )}
-
-            <FormControl isInvalid={errors.firstname}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                First Name
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <AtSignIcon color="gray.400" />
-                </InputLeftElement>
+          <div className="flex flex-col space-y-4">
+            {errors.general && <Alert type="error">{errors.general}</Alert>}
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">First Name</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
+                </span>
                 <Input
                   name="firstname"
                   value={formData.firstname}
                   onChange={handleInputChange}
                   placeholder="Enter your first name"
-                  size="lg"
-                  focusBorderColor={errors.firstname ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
+                  error={!!errors.firstname}
+                  className="pl-10"
                 />
-              </InputGroup>
-              {errors.firstname && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.firstname}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.lastname}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                Last Name
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <AtSignIcon color="gray.400" />
-                </InputLeftElement>
+              </div>
+              {errors.firstname && <p className="text-red-500 text-sm mt-1">{errors.firstname}</p>}
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Last Name</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
+                </span>
                 <Input
                   name="lastname"
                   value={formData.lastname}
                   onChange={handleInputChange}
                   placeholder="Enter your last name"
-                  size="lg"
-                  focusBorderColor={errors.lastname ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
+                  error={!!errors.lastname}
+                  className="pl-10"
                 />
-              </InputGroup>
-              {errors.lastname && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.lastname}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.username}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                Username
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <AtSignIcon color="gray.400" />
-                </InputLeftElement>
+              </div>
+              {errors.lastname && <p className="text-red-500 text-sm mt-1">{errors.lastname}</p>}
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Username</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 8a6 6 0 11-12 0 6 6 0 0112 0zm0 0v2a2 2 0 01-2 2H8a2 2 0 01-2-2V8" /></svg>
+                </span>
                 <Input
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
                   placeholder="Choose a username"
-                  size="lg"
-                  focusBorderColor={errors.username ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
+                  error={!!errors.username}
+                  className="pl-10"
                 />
-              </InputGroup>
-              {errors.username && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.username}
-                </Text>
-              )}
-            </FormControl>
-
-            <FormControl isInvalid={errors.password}>
-              <FormLabel color="gray.700" fontWeight="medium">
-                Password
-              </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <LockIcon color="gray.400" />
-                </InputLeftElement>
+              </div>
+              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+            </div>
+            <div>
+              <label className="block text-gray-900 font-medium mb-1">Password</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 17a2 2 0 002-2v-2a2 2 0 00-2-2 2 2 0 00-2 2v2a2 2 0 002 2zm6-6V9a6 6 0 10-12 0v2a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2z" /></svg>
+                </span>
                 <Input
                   name="password"
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Create a password"
-                  size="lg"
-                  focusBorderColor={errors.password ? "red.500" : "blue.500"}
-                  errorBorderColor="red.500"
+                  error={!!errors.password}
+                  className="pl-10 pr-10"
                 />
-                <InputRightElement>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2">
                   <IconButton
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                    icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
+                    onClick={() => setShowPassword((v) => !v)}
+                    icon={showPassword ? (
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.403-3.22 1.125-4.575M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm7.5 0a9.77 9.77 0 01-1.5 3.5M6.343 6.343A7.963 7.963 0 004 9c0 4.418 3.582 8 8 8 1.657 0 3.22-.403 4.575-1.125M17.657 17.657A7.963 7.963 0 0020 15c0-4.418-3.582-8-8-8-1.657 0-3.22.403-4.575 1.125" /></svg>
+                    )}
                   />
-                </InputRightElement>
-              </InputGroup>
-              {errors.password && (
-                <Text color="red.500" fontSize="sm" mt={1}>
-                  {errors.password}
-                </Text>
-              )}
-            </FormControl>
-
-            <Button
-              type="submit"
-              size="lg"
-              w="full"
-              bgGradient="linear(45deg, green.400, blue.400)"
-              color="white"
-              _hover={{
-                bgGradient: "linear(45deg, green.500, blue.500)",
-                transform: "translateY(-1px)",
-              }}
-              _active={{
-                transform: "translateY(0)",
-              }}
-              isLoading={isLoading}
-              loadingText="Creating account..."
-              spinner={<Spinner size="sm" />}
-              transition="all 0.2s"
-            >
-              Create Account
-            </Button>
-
-            <Text fontSize="sm" color="gray.600" textAlign="center">
-              Already have an account?{" "}
-              <Link color="blue.500" fontWeight="medium" onClick={onSwitchToLogin}>
-                Sign in here
-              </Link>
-            </Text>
-          </VStack>
+                </span>
+              </div>
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            </div>
+            <Button type="submit" isLoading={isLoading} loadingText="Creating account...">Create Account</Button>
+            <p className="text-sm text-gray-700 text-center">
+              Already have an account?{' '}
+              <button type="button" className="text-blue-600 font-medium hover:underline" onClick={onSwitchToLogin}>
+                <Link to="/">
+                  Sign in here
+                </Link>
+              </button>
+            </p>
+          </div>
         </form>
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-const API_BASE = "http://localhost:3000/apiv1/auth";
+const API_BASE = "http://localhost:3000/api/v1/auth";
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
