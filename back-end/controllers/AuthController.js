@@ -8,18 +8,19 @@ const login = async ( req , res ) => {
 
     try{
         if(!username || !password) {
-            return res.json({ message : 'Please enter both username and password' })
+            return res.status(400).json({ message : 'Please enter both username and password' })
         }
        
         const user = await User.findOne({ username })
+
         if(!user) {
-            return res.json({ error  : 'User not found' })
+            return res.status(400).json({ error  : 'User not found' })
         }
 
         const isValidPassword = await bcrypt.compare(password , user.password)
 
         if(!isValidPassword){
-          return res.json({ error : 'password not correct !'})
+          return res.status(400).json({ error : 'password not correct !'})
         }
 
 
@@ -29,7 +30,7 @@ const login = async ( req , res ) => {
 
     }catch(err){
          console.log(err)
-         res.json({ error : 'error' + err.message  })
+         res.status(400).json({ error : 'error' + err.message  })
     }
 }
 
@@ -40,13 +41,13 @@ const register = async ( req , res ) => {
 
     try{
         if(!username || !password || !firstname || !lastname ){
-            return res.json({ error : 'please fill all fields' })
+            return res.status(400).json({ error : 'please fill all fields' })
         }
 
         const userExists = await User.findOne({ username })
 
         if(userExists){
-            return res.json({ error : 'username already exists' })
+            return res.status(400).json({ error : 'username already exists' })
         }
 
         const  hashedPassword = await bcrypt.hash(password , 10)
@@ -61,7 +62,7 @@ const register = async ( req , res ) => {
 
     }catch(err){
          console.log(err)
-         res.json({
+         res.status(400).json({
             error : 'error' + err.message
          })
          
@@ -77,7 +78,7 @@ const destroyAccount = async ( req , res ) => {
    
     }catch(err){
          console.log(err)
-         res.json({ 
+         res.status(400).json({ 
             error : 'error ' + err.message
          })
          
@@ -91,7 +92,7 @@ const updatePassword = async ( req , res ) => {
       const user = await User.findById(req.user.id)
      const isMatch = await bcrypt.compare(oldPassword , user.password)
      if(!isMatch){
-        return res.json({ error : 'old password is incorrect' })
+        return res.status(400).json({ error : 'old password is incorrect' })
      }
      
       const hashedPassword =  await bcrypt.hash(newPassword , 10) 
@@ -102,7 +103,7 @@ const updatePassword = async ( req , res ) => {
      })
       
    }catch(err){
-      console.log({
+      res.status(400).json({
          error : 'error ' + err.message
       })
    }
@@ -122,7 +123,7 @@ const updateInfomrationProfile = async ( req , res ) => {
       })
       
      }catch(err){
-      console.log({
+      res.status(400).json({
          error : 'error ' + err.message
       })
      }
@@ -149,17 +150,18 @@ const updateProfilePicture = async ( req , res ) =>{
         }
 
          const user = await User.findById(req.user.id)
-         user.profilePicture = `/uploads/${req.file.filename}`;
+         user.profile = `/uploads/${req.file.filename}`;
          await user.save();
       
-
         res.json({
             message : "profile picture updated successfully"
         })
 
      }catch(err){
          console.log(err) 
-         res.json()
+         res.status(400).json({
+            error : 'error ' + err.message
+         })
      }
 }
 
@@ -179,7 +181,9 @@ const updateCoverPicture = async ( req , res ) =>{
         })
      }catch(err){
          console.log(err) 
-         res.json()
+         res.status(400).json({
+            error : 'error ' + err.message
+         })
      }
 }
 
@@ -192,7 +196,7 @@ const getUser =async (req , res ) => {
 
    }catch(err){
      console.log(err)
-     res.json( {
+     res.status(400).json( {
          error : 'error ' + err.message
      })
    }
