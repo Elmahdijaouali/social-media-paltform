@@ -1,5 +1,7 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
+import Like from "../models/Like.js";
+import Comment from "../models/Comment.js";
 
 // Create Post
 export const createPost = async (req, res) => {
@@ -13,9 +15,7 @@ export const createPost = async (req, res) => {
     
     const savedPost = await newPost.save();
     const populatedPost = await Post.findById(savedPost._id)
-      .populate("userId", "username profile cover firstname lastname")
-      .populate("likes", "username profile firstname lastname")
-      .populate("comments.userId", "username profile firstname lastname");
+      .populate("userId", "username profile cover firstname lastname");
     
     res.status(201).json(populatedPost);
   } catch (err) {
@@ -23,24 +23,36 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Get Post by ID
+// Get Post by ID 
 export const getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate("userId", "username profile cover firstname lastname")
-      .populate("likes", "username profile firstname lastname")
-      .populate("comments.userId", "username profile firstname lastname");
+      .populate("userId", "username profile cover firstname lastname");
     
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    res.status(200).json(post);
+    
+    const likes = await Like.find({ post: post._id })
+      .populate("user", "username profile firstname lastname");
+    
+    const comments = await Comment.find({ post: post._id })
+      .populate("user", "username profile firstname lastname")
+      .sort({ createdAt: -1 });
+    
+    const postWithDetails = {
+      ...post.toObject(),
+      likes,
+      comments
+    };
+    
+    res.status(200).json(postWithDetails);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Update Post
+// update Post
 export const updatePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -56,10 +68,7 @@ export const updatePost = async (req, res) => {
       req.params.id,
       { $set: req.body },
       { new: true }
-    )
-    .populate("userId", "username profile cover firstname lastname")
-    .populate("likes", "username profile firstname lastname")
-    .populate("comments.userId", "username profile firstname lastname");
+    ).populate("userId", "username profile cover firstname lastname");
     
     res.status(200).json(updatedPost);
   } catch (err) {
@@ -67,7 +76,7 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// Delete Post
+// delete Post
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -79,6 +88,9 @@ export const deletePost = async (req, res) => {
       return res.status(403).json("You can only delete your own posts");
     }
     
+    await Like.deleteMany({ post: post._id });
+    await Comment.deleteMany({ post: post._id });
+    
     await post.deleteOne();
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (err) {
@@ -86,137 +98,151 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// Get All Posts (Timeline)
+// get All Posts 
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find()
       .populate("userId", "username profile cover firstname lastname")
-      .populate("likes", "username profile firstname lastname")
-      .populate("comments.userId", "username profile firstname lastname")
       .sort({ createdAt: -1 });
     
-    res.status(200).json(posts);
+    // get likes and comments for each post
+    const postsWithDetails = await Promise.all(posts.map(async post => {
+      const likes = await Like.find({ post: post._id })
+        .populate("user", "username profile firstname lastname");
+      
+      const comments = await Comment.find({ post: post._id })
+        .populate("user", "username profile firstname lastname")
+        .sort({ createdAt: -1 });
+      
+      return {
+        ...post.toObject(),
+        likes,
+        comments
+      };
+    }));
+    
+    res.status(200).json(postsWithDetails);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Like/Unlike Post
+// Like Post
 export const likePost = async (req, res) => {
   try {
     const { userId } = req.body;
-    const post = await Post.findById(req.params.id);
+    const postId = req.params.id;
     
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    const isLiked = post.likes.includes(userId);
+    // exists
+    const existingLike = await Like.findOne({ user: userId, post: postId });
     
-    if (isLiked) {
-      // Unlike
-      await Post.findByIdAndUpdate(
-        req.params.id,
-        { $pull: { likes: userId } },
-        { new: true }
-      );
+    if (existingLike) {
+      // Unlike 
+      await Like.findByIdAndDelete(existingLike._id);
     } else {
-      // Like
-      await Post.findByIdAndUpdate(
-        req.params.id,
-        { $addToSet: { likes: userId } },
-        { new: true }
-      );
+      // Like 
+      const newLike = new Like({
+        user: userId,
+        post: postId
+      });
+      await newLike.save();
     }
     
-    const updatedPost = await Post.findById(req.params.id)
-      .populate("userId", "username profile cover firstname lastname")
-      .populate("likes", "username profile firstname lastname")
-      .populate("comments.userId", "username profile firstname lastname");
+    // updated likes count and list
+    const updatedLikes = await Like.find({ post: postId })
+      .populate("user", "username profile firstname lastname");
     
-    res.status(200).json(updatedPost);
+    res.status(200).json(updatedLikes);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Add Comment
+// add comment
 export const addComment = async (req, res) => {
   try {
     const { userId, text } = req.body;
+    const postId = req.params.id;
     
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      {
-        $push: {
-          comments: {
-            userId,
-            text
-          }
-        }
-      },
-      { new: true }
-    )
-    .populate("userId", "username profile cover firstname lastname")
-    .populate("likes", "username profile firstname lastname")
-    .populate("comments.userId", "username profile firstname lastname");
-    
+    const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    res.status(200).json(post);
+    const newComment = new Comment({
+      user: userId,
+      post: postId,
+      text
+    });
+    
+    const savedComment = await newComment.save();
+    const populatedComment = await Comment.findById(savedComment._id)
+      .populate("user", "username profile firstname lastname");
+    
+    res.status(201).json(populatedComment);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Delete Comment
+// delete comment
 export const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.body;
+    const postId = req.params.id;
     
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      {
-        $pull: {
-          comments: {
-            _id: commentId
-          }
-        }
-      },
-      { new: true }
-    )
-    .populate("userId", "username profile cover firstname lastname")
-    .populate("likes", "username profile firstname lastname")
-    .populate("comments.userId", "username profile firstname lastname");
+    const comment = await Comment.findOne({ 
+      _id: commentId, 
+      post: postId 
+    }).populate("user", "_id");
     
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    
-    const comment = post.comments.find(c => c._id.toString() === commentId);
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    res.status(200).json(post);
+    // check if the uuser deleting iss the comment "author" or post "owner" 
+    const post = await Post.findById(postId);
+    if (comment.user._id.toString() !== req.body.userId && 
+        post.userId.toString() !== req.body.userId) {
+      return res.status(403).json({ message: "Unauthorized to delete this comment" });
+    }
+    
+    await Comment.findByIdAndDelete(commentId);
+    res.status(200).json({ message: "Comment deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get User's Posts
+// get user posts
 export const getUserPosts = async (req, res) => {
   try {
     const { userId } = req.params;
     const posts = await Post.find({ userId })
       .populate("userId", "username profile cover firstname lastname")
-      .populate("likes", "username profile firstname lastname")
-      .populate("comments.userId", "username profile firstname lastname")
       .sort({ createdAt: -1 });
     
-    res.status(200).json(posts);
+    const postsWithDetails = await Promise.all(posts.map(async post => {
+      const likes = await Like.find({ post: post._id })
+        .populate("user", "username profile firstname lastname");
+      
+      const comments = await Comment.find({ post: post._id })
+        .populate("user", "username profile firstname lastname")
+        .sort({ createdAt: -1 });
+      
+      return {
+        ...post.toObject(),
+        likes,
+        comments
+      };
+    }));
+    
+    res.status(200).json(postsWithDetails);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
