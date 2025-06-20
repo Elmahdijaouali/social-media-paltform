@@ -7,6 +7,7 @@ import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
 import { FaUserPlus } from "react-icons/fa"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/context/AuthProvider"
 
 export default function SignupForm({ onSwitchToLogin }) {
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ export default function SignupForm({ onSwitchToLogin }) {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
+  const { signupUser } = useAuth()
   const validateForm = () => {
     const newErrors = {}
 
@@ -85,11 +86,7 @@ export default function SignupForm({ onSwitchToLogin }) {
     setErrors({})
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Simulate signup logic here
-      console.log("Signup attempt:", { ...formData, password: "[HIDDEN]" })
+      signupUser(formData)
 
       // For demo purposes, show success
       alert("Account created successfully! Please check your email to verify your account.")

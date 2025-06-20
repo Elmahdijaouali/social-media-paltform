@@ -7,6 +7,7 @@ import Checkbox from "@/components/ui/Checkbox"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/context/AuthProvider"
 
 export default function LoginForm({ onSwitchToSignup }) {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ export default function LoginForm({ onSwitchToSignup }) {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
+  const { loginUser } = useAuth()
   const validateForm = () => {
     const newErrors = {}
 
@@ -65,14 +66,7 @@ export default function LoginForm({ onSwitchToSignup }) {
     setErrors({})
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Simulate login logic here
-      console.log("Login attempt:", formData)
-
-      // For demo purposes, show success
-      alert("Login successful!")
+      loginUser(formData)
     } catch (error) {
       setErrors({
         general: "Login failed. Please check your credentials and try again.",
