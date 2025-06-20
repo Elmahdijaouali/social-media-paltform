@@ -1,2 +1,2 @@
 "# social-media-paltform" 
-"Fuck Facebook "
+"Fuck Facebook"
