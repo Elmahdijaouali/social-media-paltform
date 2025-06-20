@@ -18,8 +18,10 @@ export default function SignupForm({ onSwitchToLogin }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { signupUser } = useAuth()
+  const { signup, signupStatus, signupError } = useAuth()
+  
+  const isLoading = signupStatus === "pending"
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -82,22 +84,12 @@ export default function SignupForm({ onSwitchToLogin }) {
       return
     }
 
-    setIsLoading(true)
     setErrors({})
-
-    try {
-      signupUser(formData)
-
-      // For demo purposes, show success
-      alert("Account created successfully! Please check your email to verify your account.")
-    } catch (error) {
-      setErrors({
-        general: "Signup failed. Please try again later.",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    signup(formData)
   }
+
+  // Show signup error if it exists
+  const generalError = signupError?.response?.data?.message || signupError?.message
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -114,7 +106,7 @@ export default function SignupForm({ onSwitchToLogin }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {errors.general && <Alert type="error">{errors.general}</Alert>}
+            {generalError && <Alert type="error">{generalError}</Alert>}
             <div>
               <label className="block text-darkgrey font-medium mb-1">First Name</label>
               <div className="relative">

@@ -16,8 +16,10 @@ export default function LoginForm({ onSwitchToSignup }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { loginUser } = useAuth()
+  const { login, loginStatus, loginError } = useAuth()
+  
+  const isLoading = loginStatus === "pending"
+
   const validateForm = () => {
     const newErrors = {}
 
@@ -62,19 +64,12 @@ export default function LoginForm({ onSwitchToSignup }) {
       return
     }
 
-    setIsLoading(true)
     setErrors({})
-
-    try {
-      loginUser(formData)
-    } catch (error) {
-      setErrors({
-        general: "Login failed. Please check your credentials and try again.",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    login(formData)
   }
+
+  // Show login error if it exists
+  const generalError = loginError?.response?.data?.message || loginError?.message
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -92,7 +87,7 @@ export default function LoginForm({ onSwitchToSignup }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {errors.general && <Alert type="error">{errors.general}</Alert>}
+            {generalError && <Alert type="error">{generalError}</Alert>}
             <div>
               <label className="block text-darkgrey font-medium mb-1">Username</label>
               <div className="relative">

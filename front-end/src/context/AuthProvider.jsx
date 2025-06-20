@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("token");
       queryClient.removeQueries({ queryKey: ["user"] });
     },
-    onError: (e) => {
+    onError: () => {
       setToken(null);
       localStorage.removeItem("token");
       queryClient.removeQueries({ queryKey: ["user"] });
