@@ -103,17 +103,64 @@ const updatePassword = async ( req , res ) => {
    }
 }
 
-const updateProfile = async ( req , res ) => {
+const updateInofmrationProfile = async ( req , res ) => {
     const { username , firstname , lastname  } = req.body 
      try{
       const user = await User.findById(req.user.id)
       user.username = username
+      user.firstname = firstname
+      user.lastname = lastname
+      await user.save()
+      res.json({
+         message : "profile updated successfully"
+      })
       
      }catch(err){
       console.log({
          error : 'error ' + err.message
       })
      }
+}
+
+const logout = async (req , res ) => {
+     try{
+    
+       res.json( { message : 'logged out successfully' } )
+     }catch(err){
+         console.log(err)
+         res.json({
+            error : 'error ' + err.message
+         })
+     }
+}
+
+const updatePrfile = async ( req , res ) =>{
+     const { profilePicture } = req.body    
+     try{
+     
+        const user = await User.findById(req.user.id)
+        user.profilePicture = profilePicture
+        user.save()
+
+     }catch(err){
+         console.log(err) 
+         res.json()
+     }
+}
+
+
+const getUser =async (req , res ) => {
+
+   try{
+      const user = await User.findById(req.user.id)
+      res.json(user)
+
+   }catch(err){
+     console.log(err)
+     res.json( {
+         error : 'error ' + err.message
+     })
+   }
 }
 
 
