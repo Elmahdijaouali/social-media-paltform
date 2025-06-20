@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }) => {
     // Prevent "undefined" string tokens
     return storedToken && storedToken !== "undefined" ? storedToken : null;
   });
+  const [signupSuccessMessage, setSignupSuccessMessage] = useState(null);
   const queryClient = useQueryClient();
 
   // Fetch user info with React Query
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }) => {
     onSuccess: (data) => {
       setToken(data.token);
       localStorage.setItem("token", data.token);
+      setSignupSuccessMessage("Account created successfully! Welcome aboard!");
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
@@ -131,6 +133,16 @@ export const AuthProvider = ({ children }) => {
   // Logout function for context
   const logout = () => {
     logoutMutation.mutate();
+  };
+
+  // Function to clear success message
+  const clearSignupSuccessMessage = () => {
+    setSignupSuccessMessage(null);
+  };
+
+  // Function to set success message (for manual control)
+  const setSignupSuccess = (message) => {
+    setSignupSuccessMessage(message);
   };
 
   // Keep token in sync with localStorage
@@ -160,6 +172,9 @@ export const AuthProvider = ({ children }) => {
         logout,
         logoutStatus: logoutMutation.status,
         logoutError: logoutMutation.error,
+        signupSuccessMessage,
+        clearSignupSuccessMessage,
+        setSignupSuccess,
       }}
     >
       {children}
