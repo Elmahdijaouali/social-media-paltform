@@ -8,19 +8,18 @@ const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
 // Login function
-const loginUser = async ({ email, password }) => {
+const loginUser = async ({ username, password }) => {
   const response = await axios.post(`${API_BASE}/login`, {
-    email,
+    username,
     password,
   });
   return response.data;
 };
 
-const signupUser = async ({ email, password, ...rest }) => {
+const signupUser = async ({ username, password }) => {
   const response = await axios.post(`${API_BASE}/signup`, {
-    email,
+    username,
     password,
-    ...rest,
   });
   return response.data;
 };
