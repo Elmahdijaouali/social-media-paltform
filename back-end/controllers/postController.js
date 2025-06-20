@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Like from "../models/Like.js";
 import Comment from "../models/Comment.js";
 
-// Create Post
+// create Post
 export const createPost = async (req, res) => {
   try {
     const { userId, desc, image } = req.body;
@@ -23,7 +23,7 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Get Post by ID 
+// get post by ID 
 export const getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
@@ -52,7 +52,7 @@ export const getPost = async (req, res) => {
   }
 };
 
-// update Post
+// update post
 export const updatePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -76,7 +76,7 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// delete Post
+// delete post
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -98,7 +98,7 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// get All Posts 
+// get all posts 
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find()
@@ -127,7 +127,7 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-// Like Post
+// like post
 export const likePost = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -142,10 +142,10 @@ export const likePost = async (req, res) => {
     const existingLike = await Like.findOne({ user: userId, post: postId });
     
     if (existingLike) {
-      // Unlike 
+      // unlike 
       await Like.findByIdAndDelete(existingLike._id);
     } else {
-      // Like 
+      // like 
       const newLike = new Like({
         user: userId,
         post: postId
