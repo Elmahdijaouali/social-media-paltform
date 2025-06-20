@@ -15,9 +15,8 @@ app.use('/uploads', express.static('uploads'));
 
 const prefex = '/api/v1'
 mongoose.connect(
-    "mongodb+srv://devmehdi0:Ckaq2LPsMuIm5tpa@cluster0.teskxje.mongodb.net/"
-    // , { useNewUrlParser: true, useUnifiedTopology: true }
-)
+  process.env.MONGO_URL || 'mongodb://localhost:27017/social_media_db' 
+    , { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
   .catch((error) => console.log(error.message));
 

@@ -108,7 +108,7 @@ const updatePassword = async ( req , res ) => {
    }
 }
 
-const updateInofmrationProfile = async ( req , res ) => {
+const updateInfomrationProfile = async ( req , res ) => {
     const { username , firstname , lastname  , bio  } = req.body 
      try{
       const user = await User.findById(req.user.id)
@@ -201,4 +201,4 @@ const getUser =async (req , res ) => {
 
 
 
-export { login , register , destroyAccount , getUser , updateCoverPicture , updateInofmrationProfile , updatePassword , updateProfilePicture }
+export { login , register , destroyAccount , getUser , updateCoverPicture , updateInfomrationProfile , updatePassword , updateProfilePicture }

@@ -1,4 +1,4 @@
-import { destroyAccount, login , getUser , register, updatePassword, updateProfilePicture  , updateCoverPicture} from '../controllers/AuthController.js';
+import { destroyAccount, login , getUser , register, updatePassword, updateProfilePicture , updateInfomrationProfile , updateCoverPicture} from '../controllers/AuthController.js';
 import { Router } from "express"
 import verifyAuth from '../middlewares/auth.js'
 const router = Router();
@@ -22,8 +22,9 @@ router.post('/login' , login )
 router.post('/register' , register )
 router.delete('/destoryAccount' , verifyAuth , destroyAccount )
 router.put('/updatePassword' , verifyAuth , updatePassword)
-router.post('/updateProfilePicture' , verifyAuth ,  upload.single('image') , updateProfilePicture )
+router.put('/updateProfilePicture' , verifyAuth ,  upload.single('image') , updateProfilePicture )
 router.put('/updateCoverPicture' , verifyAuth ,  upload.single('image') , updateCoverPicture )
+router.put('/updateInfomrationProfile' , updateInfomrationProfile)
 // router.delete('/logout')
 
 
