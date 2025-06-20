@@ -2,9 +2,14 @@ import User from '../models/User.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
+
 const login = async ( req , res ) => {
     const { username , password } = req.body
+
     try{
+        if(!username || !password) {
+            return res.json({ message : 'Please enter both username and password' })
+        }
        
         const user = await User.findOne({ username })
         if(!user) {
@@ -123,25 +128,30 @@ const updateInofmrationProfile = async ( req , res ) => {
      }
 }
 
-const logout = async (req , res ) => {
-     try{
+// const logout = async (req , res ) => {
+//      try{
        
-       res.json( { message : 'logged out successfully' } )
-     }catch(err){
-         console.log(err)
-         res.json({
-            error : 'error ' + err.message
-         })
-     }
-}
+//        res.json( { message : 'logged out successfully' } )
+//      }catch(err){
+//          console.log(err)
+//          res.json({
+//             error : 'error ' + err.message
+//          })
+//      }
+// }
 
-const updatePrfile = async ( req , res ) =>{
-     const { profilePicture } = req.body    
+const updateProfilePicture = async ( req , res ) =>{
+        
      try{
-     
-        const user = await User.findById(req.user.id)
-        user.profilePicture = profilePicture
-        user.save()
+      
+       if (!req.file) {
+          return res.status(400).json({ message: 'No image file uploaded' });
+        }
+
+         const user = await User.findById(req.user.id)
+         user.profilePicture = `/uploads/${req.file.filename}`;
+         await user.save();
+      
 
         res.json({
             message : "profile picture updated successfully"
@@ -153,15 +163,17 @@ const updatePrfile = async ( req , res ) =>{
      }
 }
 
-const updateCover = async ( req , res ) =>{
-     const { cover  } = req.body    
-     try{
+const updateCoverPicture = async ( req , res ) =>{
      
-        const user = await User.findById(req.user.id)
-        user.cover = cover 
+     try{
+        if (!req.file) {
+          return res.status(400).json({ message: 'No image file uploaded' });
+        }
 
-        user.save()
-
+         const user = await User.findById(req.user.id)
+         user.cover = `/uploads/${req.file.filename}`;
+         await user.save();
+        
         res.json( {
             message : 'cover updated successfully'
         })
@@ -189,4 +201,4 @@ const getUser =async (req , res ) => {
 
 
 
-export { login , register , destroyAccount }
+export { login , register , destroyAccount , getUser , updateCoverPicture , updateInofmrationProfile , updatePassword , updateProfilePicture }
