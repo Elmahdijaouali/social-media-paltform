@@ -3,10 +3,12 @@ import User from "../models/User.js";
 import Like from "../models/Like.js";
 import Comment from "../models/Comment.js";
 
-// create Post
+// create post with image upload
 export const createPost = async (req, res) => {
   try {
-    const { userId, desc, image } = req.body;
+    const { userId, desc } = req.body;
+    const image = req.file ? req.file.path : null;
+
     const newPost = new Post({
       userId,
       desc,
@@ -23,7 +25,7 @@ export const createPost = async (req, res) => {
   }
 };
 
-// get post by ID 
+// get post by ID
 export const getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
@@ -52,7 +54,7 @@ export const getPost = async (req, res) => {
   }
 };
 
-// update post
+// uupdate post with optional image upload
 export const updatePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -64,9 +66,14 @@ export const updatePost = async (req, res) => {
       return res.status(403).json("You can only update your own posts");
     }
     
+    const updateData = {
+      ...req.body,
+      ...(req.file && { image: req.file.path })
+    };
+    
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { $set: updateData },
       { new: true }
     ).populate("userId", "username profile cover firstname lastname");
     
@@ -98,14 +105,13 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// get all posts 
+// get all posts
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find()
       .populate("userId", "username profile cover firstname lastname")
       .sort({ createdAt: -1 });
     
-    // get likes and comments for each post
     const postsWithDetails = await Promise.all(posts.map(async post => {
       const likes = await Like.find({ post: post._id })
         .populate("user", "username profile firstname lastname");
@@ -138,14 +144,11 @@ export const likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    // exists
     const existingLike = await Like.findOne({ user: userId, post: postId });
     
     if (existingLike) {
-      // unlike 
       await Like.findByIdAndDelete(existingLike._id);
     } else {
-      // like 
       const newLike = new Like({
         user: userId,
         post: postId
@@ -153,7 +156,6 @@ export const likePost = async (req, res) => {
       await newLike.save();
     }
     
-    // updated likes count and list
     const updatedLikes = await Like.find({ post: postId })
       .populate("user", "username profile firstname lastname");
     
@@ -205,7 +207,6 @@ export const deleteComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    // check if the uuser deleting iss the comment "author" or post "owner" 
     const post = await Post.findById(postId);
     if (comment.user._id.toString() !== req.body.userId && 
         post.userId.toString() !== req.body.userId) {
