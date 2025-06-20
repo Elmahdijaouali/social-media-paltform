@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import Button from "@/components/ui/Button"
 import Input from "@/components/ui/Input"
@@ -16,30 +14,24 @@ export default function LoginForm({ onSwitchToSignup }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const [showSignupSuccess, setShowSignupSuccess] = useState(false)
-  const { login, loginStatus, loginError } = useAuth()
+  const { login, loginStatus, loginError, signupSuccessMessage, clearSignupSuccessMessage } = useAuth()
   const location = useLocation()
   
   const isLoading = loginStatus === "pending"
 
-  // Check for signup success parameter and show success message
+  // Auto-clear success message after 20 seconds
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search)
-    const signupSuccess = searchParams.get('signup')
-    if (signupSuccess === 'success') {
-      setShowSignupSuccess(true)
-      
-      // Hide the success message after 20 seconds
+    if (signupSuccessMessage) {
       const timer = setTimeout(() => {
-        setShowSignupSuccess(false)
-      }, 20000) // 20 seconds
+        clearSignupSuccessMessage();
+      }, 20000); // 20 seconds
 
-      return () => clearTimeout(timer)
+      return () => clearTimeout(timer);
     }
-  }, [location.search])
+  }, [signupSuccessMessage, clearSignupSuccessMessage]);
 
   const dismissSuccessMessage = () => {
-    setShowSignupSuccess(false)
+    clearSignupSuccessMessage();
   }
 
   const validateForm = () => {
@@ -91,7 +83,53 @@ export default function LoginForm({ onSwitchToSignup }) {
   }
 
   // Show login error if it exists
-  const generalError = loginError?.response?.data?.message || loginError?.message
+  const generalError = loginError?.response?.data?.message || 
+                      loginError?.response?.data?.error || 
+                      loginError?.response?.data?.msg ||
+                      loginError?.message
+  
+  // Debug logging to see the actual error structure
+  useEffect(() => {
+    if (loginError) {
+      console.log('Full loginError:', loginError)
+      console.log('loginError.response:', loginError.response)
+      console.log('loginError.response.data:', loginError.response?.data)
+      console.log('loginError.message:', loginError.message)
+    }
+  }, [loginError])
+  
+  // Get user-friendly error message
+  const getUserFriendlyError = () => {
+    if (generalError) {
+      // Handle 400 status code specifically
+      if (loginError?.response?.status === 400) {
+        if (generalError.toLowerCase().includes('invalid') && generalError.toLowerCase().includes('password')) {
+          return "Invalid username or password. Please check your credentials and try again.";
+        }
+        if (generalError.toLowerCase().includes('username') && generalError.toLowerCase().includes('not found')) {
+          return "Username not found. Please check your username or create a new account.";
+        }
+        if (generalError.toLowerCase().includes('account') && generalError.toLowerCase().includes('locked')) {
+          return "Your account has been locked. Please contact support for assistance.";
+        }
+        // For generic 400 errors
+        if (generalError.toLowerCase().includes('request failed')) {
+          return "There was an issue with your request. Please check your information and try again.";
+        }
+      }
+      
+      // Handle other common error patterns
+      if (generalError.toLowerCase().includes('network') || generalError.toLowerCase().includes('connection')) {
+        return "Unable to connect to the server. Please check your internet connection and try again.";
+      }
+      
+      // Return the original error if no specific pattern matches
+      return generalError;
+    }
+    return null;
+  }
+  
+  const userFriendlyError = getUserFriendlyError()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -109,10 +147,10 @@ export default function LoginForm({ onSwitchToSignup }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {showSignupSuccess && (
+            {signupSuccessMessage && (
               <div className="relative">
                 <Alert type="success">
-                  Account created successfully! You can now sign in with your credentials.
+                  {signupSuccessMessage}
                 </Alert>
                 <button
                   type="button"
@@ -126,7 +164,7 @@ export default function LoginForm({ onSwitchToSignup }) {
                 </button>
               </div>
             )}
-            {generalError && <Alert type="error">{generalError}</Alert>}
+            {userFriendlyError && <Alert type="error">{userFriendlyError}</Alert>}
             <div>
               <label className="block text-darkgrey font-medium mb-1">Username</label>
               <div className="relative">
