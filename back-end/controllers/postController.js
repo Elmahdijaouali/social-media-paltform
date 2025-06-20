@@ -6,11 +6,15 @@ import Comment from "../models/Comment.js";
 // create post with image upload
 export const createPost = async (req, res) => {
   try {
-    const { userId, desc } = req.body;
+    const {  desc } = req.body;
     const image = req.file ? req.file.path : null;
+    const id = req.user.id
+    if (!id) {
+      return res.status(401).json({ message: 'Unauthorized: No user ID' });
+    }
 
     const newPost = new Post({
-      userId,
+      userId : id ,
       desc,
       image
     });

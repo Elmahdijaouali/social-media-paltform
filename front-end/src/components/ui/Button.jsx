@@ -3,7 +3,7 @@ import React from "react";
 const Button = ({ type = "button", children, isLoading, loadingText, className = "", ...props }) => (
   <button
     type={type}
-    className={`w-full py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+    className={`w-full py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-purple to-blue hover:from-lightpurple hover:to-lightblue transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-lightblue focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     disabled={isLoading || props.disabled}
     {...props}
   >
