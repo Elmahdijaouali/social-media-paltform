@@ -1,8 +1,8 @@
-
 import { useState } from "react"
 import ContactsSidebar from "@/components/chat/Contacts-sidebar"
 import ChatBox from "@/components/chat/Chat-box"
 import avatar0 from "../imgs/user.png"
+
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
@@ -74,7 +74,7 @@ export default function ChatPage() {
     },
   ]
 
-  const messages = [
+  const [messages, setMessages] = useState([
     {
       id: 1,
       text: "Your story continues on mobile: Build and edit decks. Give and receive feedback. Add content from any other app! 😊",
@@ -108,7 +108,7 @@ export default function ChatPage() {
       sender: "me",
       isFile: true,
     },
-  ]
+  ])
 
   const handleSendMessage = (messageText, uploadedFiles = []) => {
     // Handle sending message
@@ -124,8 +124,10 @@ export default function ChatPage() {
       files: uploadedFiles.length > 0 ? uploadedFiles : undefined
     }
     
-    // In a real app, you would add the message to the messages array
-    // and send it to your backend
+    // Add the new message to the messages array
+    setMessages(prevMessages => [...prevMessages, newMessage])
+    
+    // In a real app, you would also send it to your backend
     console.log("New message object:", newMessage)
   }
 
