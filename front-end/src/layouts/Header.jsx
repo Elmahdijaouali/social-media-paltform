@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthProvider";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import Notifications from "../components/Notifications";
 
 const Header = () => {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationsRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
+      }
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
+        setNotificationsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -59,7 +69,14 @@ const Header = () => {
               </div>
             </div>
             <div className="flex items-center gap-6">
-              <button className="flex items-center gap-2 p-2 px-3 rounded-full text-indigo-600 bg-indigo-50">
+              <Link
+                to="/app/home"
+                className={`flex items-center gap-2 p-2 px-3 rounded-full transition ${
+                  location.pathname === "/app/home"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -67,9 +84,18 @@ const Header = () => {
                 >
                   <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
-                <span className="text-sm font-semibold">Home</span>
-              </button>
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
+                {location.pathname === "/app/home" && (
+                  <span className="text-sm font-semibold">Home</span>
+                )}
+              </Link>
+              <Link
+                to="/app/messages"
+                className={`flex items-center gap-2 p-2 px-3 rounded-full transition ${
+                  location.pathname === "/app/messages"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -83,23 +109,18 @@ const Header = () => {
                     d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                   />
                 </svg>
-              </button>
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-              </button>
-              <button className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
+                {location.pathname === "/app/messages" && (
+                  <span className="text-sm font-semibold">Messages</span>
+                )}
+              </Link>
+              <Link
+                to="/app/friends"
+                className={`flex items-center gap-2 p-2 px-3 rounded-full transition ${
+                  location.pathname === "/app/friends"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -113,7 +134,39 @@ const Header = () => {
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                   />
                 </svg>
-              </button>
+                {location.pathname === "/app/friends" && (
+                  <span className="text-sm font-semibold">Friends</span>
+                )}
+              </Link>
+              <div className="relative" ref={notificationsRef}>
+                <button
+                  className={`p-2 rounded-full transition ${
+                    notificationsOpen
+                      ? "text-indigo-600 bg-indigo-50"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                </button>
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2">
+                    <Notifications />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -273,7 +326,15 @@ const Header = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <button className="flex items-center gap-2 p-2 px-3 rounded-full text-indigo-600 bg-indigo-50 w-full justify-start">
+              <Link
+                to="/app/home"
+                className={`flex items-center gap-2 p-2 px-3 rounded-full transition w-full justify-start ${
+                  location.pathname === "/app/home"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="currentColor"
@@ -282,8 +343,16 @@ const Header = () => {
                   <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                 </svg>
                 <span className="text-sm font-semibold">Home</span>
-              </button>
-              <button className="flex items-center gap-2 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition w-full justify-start">
+              </Link>
+              <Link
+                to="/app/messages"
+                className={`flex items-center gap-2 p-2 rounded-full transition w-full justify-start ${
+                  location.pathname === "/app/messages"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -298,24 +367,16 @@ const Header = () => {
                   />
                 </svg>
                 <span className="text-sm font-semibold">Messages</span>
-              </button>
-              <button className="flex items-center gap-2 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition w-full justify-start">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-                <span className="text-sm font-semibold">Notifications</span>
-              </button>
-              <button className="flex items-center gap-2 p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition w-full justify-start">
+              </Link>
+              <Link
+                to="/app/friends"
+                className={`flex items-center gap-2 p-2 rounded-full transition w-full justify-start ${
+                  location.pathname === "/app/friends"
+                    ? "text-indigo-600 bg-indigo-50"
+                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -330,7 +391,7 @@ const Header = () => {
                   />
                 </svg>
                 <span className="text-sm font-semibold">Friends</span>
-              </button>
+              </Link>
             </div>
           </div>
         )}
