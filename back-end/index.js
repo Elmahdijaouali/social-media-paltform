@@ -1,8 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { Socket } from 'socket.io';
-import { Server } from 'http';
-import http from 'http'
+import { Server } from 'socket.io';
+import http from 'http';
 import mongoose from 'mongoose';
 import postRoute from './routes/postRoute.js';
 import userRoute from './routes/userRoute.js';
@@ -15,9 +14,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const server = http.createServer(app)
+const server = http.createServer(app); 
 
-const io = new Socket(server, {
+const io = new Server(server, {
   cors: {
     origin: '*',
     methods: ["GET", "POST"],
@@ -40,8 +39,8 @@ app.use((req , res , next ) => {
 app.use(cors());
 const prefex = '/api/v1'
 mongoose.connect(
-  process.env.MONGO_URL || 'mongodb://localhost:27017/social_media_db' 
-    , { useNewUrlParser: true, useUnifiedTopology: true })
+   process.env.MONGO_URL || 'mongodb://localhost:27017/social_media_db' 
+   )
   .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
   .catch((error) => console.log(error.message));
 
