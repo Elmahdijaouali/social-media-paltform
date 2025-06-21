@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import postRoute from './routes/postRoute.js';
 import userRoute from './routes/userRoute.js';
 import friendRoute from './routes/friendRoute.js'
+import chatRoute from './routes/chatRoute.js'
 
 import cors from 'cors' ;
 
@@ -65,7 +66,6 @@ io.on("connection" , (socket) => {
     }
   }
     
-  
   );
  
 } )
@@ -74,5 +74,6 @@ io.on("connection" , (socket) => {
 app.use( prefex + '/posts', postRoute);
 app.use( prefex + '/auth', userRoute )
 app.use( prefex + '/friends', friendRoute )
+app.use(prefex + '/chats', chatRoute )
 
 

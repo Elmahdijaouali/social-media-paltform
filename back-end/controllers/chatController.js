@@ -5,9 +5,9 @@ import Message from '../models/Message.js'
 
 const createChat = async (req , res ) => {
     const userId1 = req.user.id
-    const { userId2 , message  } = req.body
-    if(!userId2 || !message){
-        return res.status(400).json({error : "Please provide both userId and message" })
+    const { userId2   } = req.body
+    if(!userId2 ){
+        return res.status(400).json({error : "Please provide both userId2 " })
     }
     try{
         let chat = await Chat.findOne({ 
@@ -61,7 +61,7 @@ const getChats = async (req , res ) => {
 }
 
 const getChat = async (req , res ) =>{
-        const chatId = req.params.chatId
+        const chatId = req.params.id
         if(!chatId){
             return res.status(422).json({
                 message : 'chat id is required'
@@ -87,7 +87,7 @@ const getChat = async (req , res ) =>{
 }
 
 const sendMessage = async (req , res ) =>{
-    const chatId = req.params.chatId
+    const chatId = req.params.id
     const message = req.body.message
     if(!chatId || !message){
         return res.status(422).json({
@@ -99,7 +99,7 @@ const sendMessage = async (req , res ) =>{
       if(!chat){
           return res.status(404).json({
             message : 'chat not found'
-            })
+          })
       }
       const newMessage = await Message.create({
         text : message ,
