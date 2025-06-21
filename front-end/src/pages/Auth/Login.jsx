@@ -4,7 +4,7 @@ import Input from "@/components/ui/Input"
 import Checkbox from "@/components/ui/Checkbox"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
-import { Link, useLocation } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function LoginForm({ onSwitchToSignup }) {
@@ -15,7 +15,6 @@ export default function LoginForm({ onSwitchToSignup }) {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const { login, loginStatus, loginError, signupSuccessMessage, clearSignupSuccessMessage } = useAuth()
-  const location = useLocation()
   
   const isLoading = loginStatus === "pending"
 
@@ -83,8 +82,8 @@ export default function LoginForm({ onSwitchToSignup }) {
   }
 
   // Show login error if it exists
-  const generalError = loginError?.response?.data?.message || 
-                      loginError?.response?.data?.error || 
+  const generalError = loginError?.response?.data?.error || 
+                      loginError?.response?.data?.message || 
                       loginError?.response?.data?.msg ||
                       loginError?.message
   

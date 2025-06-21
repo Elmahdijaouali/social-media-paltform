@@ -23,8 +23,8 @@ export default function SignupForm({ onSwitchToLogin }) {
   const isLoading = signupStatus === "pending"
   const navigate = useNavigate()
   // Show signup error if it exists
-  const generalError = signupError?.response?.data?.message || 
-                      signupError?.response?.data?.error || 
+  const generalError = signupError?.response?.data?.error || 
+                      signupError?.response?.data?.message || 
                       signupError?.response?.data?.msg ||
                       signupError?.message
   
@@ -171,8 +171,19 @@ export default function SignupForm({ onSwitchToLogin }) {
 
     setErrors({})
     signup(formData)
-    navigate('/')
   }
+
+  // Navigate to login page after successful signup
+  useEffect(() => {
+    if (signupStatus === "success") {
+      // Wait a moment to show the success message, then navigate
+      const timer = setTimeout(() => {
+        navigate('/')
+      }, 2000) // 2 seconds delay to show success message
+
+      return () => clearTimeout(timer)
+    }
+  }, [signupStatus, navigate])
 
   // Clear success message when component unmounts or when user navigates away
   useEffect(() => {
