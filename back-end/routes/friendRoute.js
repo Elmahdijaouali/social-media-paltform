@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { addFriend, blockFriend, deleteFriend, getFriends, unblockFriend  , getListUsersForAddNewFriend , getListBlockedFriends} from '../controllers/friendController'
-import verifyAuth from '../middlewares/auth'
+import { addFriend, blockFriend, deleteFriend, getFriends, unblockFriend  , getListUsersForAddNewFriend , getListBlockedFriends} from '../controllers/friendController.js'
+import verifyAuth from '../middlewares/auth.js'
 
 
 const router = Router()
