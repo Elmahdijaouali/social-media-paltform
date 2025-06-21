@@ -203,7 +203,9 @@ const updateCoverPicture = async ( req , res ) =>{
 const getUser =async (req , res ) => {
 
    try{
+    
       const user = await User.findById(req.user.id)
+
       res.json(user)
 
    }catch(err){
