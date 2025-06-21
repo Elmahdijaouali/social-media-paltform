@@ -1,7 +1,7 @@
 import User from '../models/User.js' 
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-
+import fs from 'fs';
 
 const login = async ( req , res ) => {
     const { username , password } = req.body
@@ -37,7 +37,7 @@ const login = async ( req , res ) => {
 
 const register = async ( req , res ) => {
 
-    const { username , firstname , bio , lastname , password } = req.body
+    const { username , firstname  , lastname , password } = req.body
 
     try{
         if(!username || !password || !firstname || !lastname ){
@@ -52,7 +52,7 @@ const register = async ( req , res ) => {
 
         const  hashedPassword = await bcrypt.hash(password , 10)
 
-        const user = new User({username , firstname , lastname , bio  , password : hashedPassword })
+        const user = new User({username , firstname , lastname  , password : hashedPassword })
 
         await user.save()
 
@@ -150,7 +150,13 @@ const updateProfilePicture = async ( req , res ) =>{
         }
 
          const user = await User.findById(req.user.id)
-         user.profile = `/uploads/${req.file.filename}`;
+         if (user.profile) {
+           const oldPath = path.join('uploads/users/profiles', path.basename(user.profile));
+           fs.unlink(oldPath, (err) => {
+                 if (err) console.warn('Failed to delete old image:', err.message);
+               });
+             }
+         user.profile = `/uploads/users/profiles/${req.file.filename}`;
          await user.save();
       
         res.json({
@@ -173,7 +179,13 @@ const updateCoverPicture = async ( req , res ) =>{
         }
 
          const user = await User.findById(req.user.id)
-         user.cover = `/uploads/${req.file.filename}`;
+           if (user.cover) {
+                 const oldPath = path.join('uploads/users/covers', path.basename(user.cover));
+                 fs.unlink(oldPath, (err) => {
+                   if (err) console.warn('Failed to delete old image:', err.message);
+                 });
+           }
+         user.cover = `/uploads/users/covers/${req.file.path}`;
          await user.save();
         
         res.json( {

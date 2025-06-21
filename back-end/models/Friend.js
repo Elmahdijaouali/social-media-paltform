@@ -4,6 +4,7 @@ const userSchema = mongoose.Schema(
   {
     userId : {type:  mongoose.Schema.Types.ObjectId, ref: "Users" , required: true},
     friendId : { type:  mongoose.Schema.Types.ObjectId, ref: "Users" , required: true},
+    status : {type: String, required: true , default : "allowed"}
   },
   {
     timestamps: true,

@@ -5,6 +5,8 @@ dotenv.config();
 import mongoose from 'mongoose';
 import postRoute from './routes/postRoute.js';
 import userRoute from './routes/userRoute.js';
+import friendRoute from './routes/friendRoute.js'
+
 import cors from 'cors' ;
 
 const app = express();
@@ -23,8 +25,10 @@ mongoose.connect(
   .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
   .catch((error) => console.log(error.message));
 
+  
 // Routes
 app.use( prefex + '/posts', postRoute);
 app.use( prefex + '/auth', userRoute )
+app.use( prefex + '/friends', friendRoute )
 
 
