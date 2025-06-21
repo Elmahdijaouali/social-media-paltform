@@ -39,7 +39,7 @@ app.use((req , res , next ) => {
 app.use(cors());
 const prefex = '/api/v1'
 mongoose.connect(
-   process.env.MONGO_URL || 'mongodb://localhost:27017/social_media_db' 
+   process.env.MONGO_DB || 'mongodb://localhost:27017/social_media_db' 
    )
   .then(() => app.listen(PORT, () => console.log(`Server running on port ${PORT}`)))
   .catch((error) => console.log(error.message));

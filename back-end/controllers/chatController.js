@@ -156,4 +156,4 @@ const sendMessage = async (req , res ) =>{
 //     }
 // }
 
-export { createChat , sendMessage  , getChat , getChats , deleteChat , deleteMessage }
+export { createChat , sendMessage  , getChat , getChats  }
