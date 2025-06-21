@@ -8,7 +8,7 @@ export const createPost = async (req, res) => {
   try {
     const {  desc } = req.body;
     const image = req.file ? req.file.path : null;
-    const id = req.user.id
+    const id = req.id
     if (!id) {
       return res.status(401).json({ message: 'Unauthorized: No user ID' });
     }

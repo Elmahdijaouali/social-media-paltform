@@ -1,4 +1,4 @@
-import { destroyAccount, login , getUser , register, updatePassword, updateProfilePicture , updateInfomrationProfile , updateCoverPicture} from '../controllers/AuthController.js';
+import { destroyAccount, login , getUser , register, updatePassword, updateProfilePicture , updateInfomrationProfile , updateCoverPicture} from '../controllers/authController.js';
 import { Router } from "express"
 import verifyAuth from '../middlewares/auth.js'
 const router = Router();
@@ -8,7 +8,7 @@ import path from 'path'
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); 
+    cb(null, 'uploads/users/'); 
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); 
@@ -17,9 +17,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.get('/me' , getUser )
+
 router.post('/login' , login ) 
 router.post('/register' , register )
+router.get('/me' , verifyAuth , getUser )
 router.delete('/destoryAccount' , verifyAuth , destroyAccount )
 router.put('/updatePassword' , verifyAuth , updatePassword)
 router.put('/updateProfilePicture' , verifyAuth ,  upload.single('image') , updateProfilePicture )
