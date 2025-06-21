@@ -6,7 +6,7 @@ import Input from "@/components/ui/Input"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
 // import { FaUserPlus } from "react-icons/fa"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function SignupForm({ onSwitchToLogin }) {
@@ -18,23 +18,88 @@ export default function SignupForm({ onSwitchToLogin }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const { signup, signupStatus, signupError } = useAuth()
-  const navigate = useNavigate()
+  const { signup, signupStatus, signupError, signupSuccessMessage, clearSignupSuccessMessage } = useAuth()
   
   const isLoading = signupStatus === "pending"
-  const isSuccess = signupStatus === "success"
-
-  // Redirect to login page after successful signup
+  const navigate = useNavigate()
+  // Show signup error if it exists
+  const generalError = signupError?.response?.data?.error || 
+                      signupError?.response?.data?.message || 
+                      signupError?.response?.data?.msg ||
+                      signupError?.message
+  
+  // Debug logging to see the actual error structure
   useEffect(() => {
-    if (isSuccess) {
-      // Wait a moment to show the success message, then redirect
-      const timer = setTimeout(() => {
-        navigate("/?signup=success", { replace: true })
-      }, 1500) // 1.5 seconds delay to show success message
-
-      return () => clearTimeout(timer)
+    if (signupError) {
+      console.log('Full signupError:', signupError)
+      console.log('signupError.response:', signupError.response)
+      console.log('signupError.response.data:', signupError.response?.data)
+      console.log('signupError.message:', signupError.message)
     }
-  }, [isSuccess, navigate])
+  }, [signupError])
+  
+  // Check for specific field errors from the API response
+  const apiErrors = signupError?.response?.data?.errors || {}
+  
+  // Combine local validation errors with API errors
+  const allErrors = {
+    ...errors,
+    ...apiErrors
+  }
+  
+  // Check if the error is specifically about username conflict
+  const isUsernameConflict = generalError && (
+    generalError.toLowerCase().includes('username') && 
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already taken') ||
+     generalError.toLowerCase().includes('already in use'))
+  )
+  
+  // Check if the error is about user already existing (email/username)
+  const isUserExists = generalError && (
+    generalError.toLowerCase().includes('user') && 
+    (generalError.toLowerCase().includes('already exists') || 
+     generalError.toLowerCase().includes('already registered'))
+  )
+  
+  // Get user-friendly error message
+  const getUserFriendlyError = () => {
+    if (isUsernameConflict) {
+      return "This username is already taken. Please choose a different username.";
+    }
+    if (isUserExists) {
+      return "An account with these details already exists. Please try signing in instead.";
+    }
+    if (generalError) {
+      // Handle 400 status code specifically
+      if (signupError?.response?.status === 400) {
+        if (generalError.toLowerCase().includes('username') && generalError.toLowerCase().includes('already')) {
+          return "This username is already taken. Please choose a different username.";
+        }
+        if (generalError.toLowerCase().includes('email') && generalError.toLowerCase().includes('already')) {
+          return "This email address is already registered. Please use a different email or try signing in.";
+        }
+        if (generalError.toLowerCase().includes('password')) {
+          return "There was an issue with your password. Please check your password requirements.";
+        }
+        // For generic 400 errors, try to extract more specific info
+        if (generalError.toLowerCase().includes('request failed')) {
+          return "There was an issue with your request. Please check your information and try again.";
+        }
+      }
+      
+      // Handle other common error patterns
+      if (generalError.toLowerCase().includes('network') || generalError.toLowerCase().includes('connection')) {
+        return "Unable to connect to the server. Please check your internet connection and try again.";
+      }
+      
+      // Return the original error if no specific pattern matches
+      return generalError;
+    }
+    return null;
+  }
+  
+  const userFriendlyError = getUserFriendlyError()
 
   const validateForm = () => {
     const newErrors = {}
@@ -108,59 +173,26 @@ export default function SignupForm({ onSwitchToLogin }) {
     signup(formData)
   }
 
-  // Show signup error if it exists
-  const generalError = signupError?.response?.data?.message || signupError?.message
-  
-  // Check for specific field errors from the API response
-  const apiErrors = signupError?.response?.data?.errors || {}
-  
-  // Combine local validation errors with API errors
-  const allErrors = {
-    ...errors,
-    ...apiErrors
-  }
-  
-  // Check if the error is specifically about username conflict
-  const isUsernameConflict = generalError && (
-    generalError.toLowerCase().includes('username') && 
-    (generalError.toLowerCase().includes('already exists') || 
-     generalError.toLowerCase().includes('already taken') ||
-     generalError.toLowerCase().includes('already in use'))
-  )
-  
-  // Check if the error is about user already existing (email/username)
-  const isUserExists = generalError && (
-    generalError.toLowerCase().includes('user') && 
-    (generalError.toLowerCase().includes('already exists') || 
-     generalError.toLowerCase().includes('already registered'))
-  )
-  
-  // Get user-friendly error message
-  const getUserFriendlyError = () => {
-    if (isUsernameConflict) {
-      return "This username is already taken. Please choose a different username.";
+  // Navigate to login page after successful signup
+  useEffect(() => {
+    if (signupStatus === "success") {
+      // Wait a moment to show the success message, then navigate
+      const timer = setTimeout(() => {
+        navigate('/')
+      }, 2000) // 2 seconds delay to show success message
+
+      return () => clearTimeout(timer)
     }
-    if (isUserExists) {
-      return "An account with these details already exists. Please try signing in instead.";
-    }
-    if (generalError) {
-      // Handle other common error patterns
-      if (generalError.toLowerCase().includes('email') && generalError.toLowerCase().includes('already')) {
-        return "This email address is already registered. Please use a different email or try signing in.";
+  }, [signupStatus, navigate])
+
+  // Clear success message when component unmounts or when user navigates away
+  useEffect(() => {
+    return () => {
+      if (signupSuccessMessage) {
+        clearSignupSuccessMessage();
       }
-      if (generalError.toLowerCase().includes('password')) {
-        return "There was an issue with your password. Please check your password requirements.";
-      }
-      if (generalError.toLowerCase().includes('network') || generalError.toLowerCase().includes('connection')) {
-        return "Unable to connect to the server. Please check your internet connection and try again.";
-      }
-      // Return the original error if no specific pattern matches
-      return generalError;
-    }
-    return null;
-  }
-  
-  const userFriendlyError = getUserFriendlyError()
+    };
+  }, [signupSuccessMessage, clearSignupSuccessMessage]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-lightgreen to-paleblue flex items-center justify-center p-4">
@@ -177,16 +209,10 @@ export default function SignupForm({ onSwitchToLogin }) {
         {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="flex flex-col space-y-4">
-            {isSuccess && <Alert type="success">Account created successfully! Welcome aboard!</Alert>}
+            {signupSuccessMessage && <Alert type="success">{signupSuccessMessage}</Alert>}
             {userFriendlyError && (
               <div className="space-y-2">
                 <Alert type="error">{userFriendlyError}</Alert>
-                {(isUsernameConflict || isUserExists) && (
-                  <div className="text-sm text-grey bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    <p className="font-medium text-darkgrey mb-1">Already have an account?</p>
-                    <p>If you've signed up before, you can <button type="button" className="text-blue font-medium hover:underline" onClick={onSwitchToLogin}>sign in here</button> instead.</p>
-                  </div>
-                )}
               </div>
             )}
             <div>

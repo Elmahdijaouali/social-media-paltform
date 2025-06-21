@@ -201,7 +201,7 @@ const updateCoverPicture = async ( req , res ) =>{
 
 
 const getUser =async (req , res ) => {
-
+// here
    try{
     
       const user = await User.findById(req.user.id)

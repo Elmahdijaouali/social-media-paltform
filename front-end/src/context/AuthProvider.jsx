@@ -26,7 +26,10 @@ const signupUser = async ({ firstname, lastname, username, password }) => {
   return response.data;
 };
 
-const logoutUser = async (token) => {
+const logoutUser = async () => {
+  // Since the backend logout route is commented out, we'll just handle logout locally
+  // If you want to implement server-side logout later, uncomment the backend route and this code
+  /*
   await axios.post(
     `${API_BASE}/logout`,
     {},
@@ -36,12 +39,32 @@ const logoutUser = async (token) => {
       },
     }
   );
+  */
+  
+  // For now, just return success to handle logout locally
+  return { success: true };
+};
+
+// Helper function to check if JWT token is expired
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch {
+    return true; // If we can't parse the token, consider it invalid
+  }
 };
 
 // Fetch user info from backend using token
 const fetchUser = async (token) => {
   if (!token) {
     throw new Error("No token provided");
+  }
+  
+  // Check if token is expired before making the request
+  if (isTokenExpired(token)) {
+    throw new Error("Token is expired");
   }
   
   try {
@@ -68,9 +91,18 @@ const fetchUser = async (token) => {
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     const storedToken = localStorage.getItem("token");
-    // Prevent "undefined" string tokens
-    return storedToken && storedToken !== "undefined" ? storedToken : null;
+    // Prevent "undefined" string tokens and expired tokens
+    if (storedToken && storedToken !== "undefined") {
+      // Check if token is expired
+      if (isTokenExpired(storedToken)) {
+        localStorage.removeItem("token");
+        return null;
+      }
+      return storedToken;
+    }
+    return null;
   });
+  const [signupSuccessMessage, setSignupSuccessMessage] = useState(null);
   const queryClient = useQueryClient();
 
   // Fetch user info with React Query
@@ -106,16 +138,17 @@ export const AuthProvider = ({ children }) => {
   // Signup mutation
   const signupMutation = useMutation({
     mutationFn: signupUser,
-    onSuccess: (data) => {
-      setToken(data.token);
-      localStorage.setItem("token", data.token);
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+    onSuccess: () => {
+      // Backend doesn't return a token on signup, so we don't set it
+      // User needs to login after signup
+      setSignupSuccessMessage("Account created successfully! Welcome aboard!");
+      // Don't invalidate user queries since user isn't logged in yet
     },
   });
 
   // Logout mutation
   const logoutMutation = useMutation({
-    mutationFn: () => logoutUser(token),
+    mutationFn: () => logoutUser(),
     onSuccess: () => {
       setToken(null);
       localStorage.removeItem("token");
@@ -131,6 +164,16 @@ export const AuthProvider = ({ children }) => {
   // Logout function for context
   const logout = () => {
     logoutMutation.mutate();
+  };
+
+  // Function to clear success message
+  const clearSignupSuccessMessage = () => {
+    setSignupSuccessMessage(null);
+  };
+
+  // Function to set success message (for manual control)
+  const setSignupSuccess = (message) => {
+    setSignupSuccessMessage(message);
   };
 
   // Keep token in sync with localStorage
@@ -160,6 +203,9 @@ export const AuthProvider = ({ children }) => {
         logout,
         logoutStatus: logoutMutation.status,
         logoutError: logoutMutation.error,
+        signupSuccessMessage,
+        clearSignupSuccessMessage,
+        setSignupSuccess,
       }}
     >
       {children}
