@@ -40,7 +40,7 @@ const logoutUser = async () => {
     }
   );
   */
-  
+
   // For now, just return success to handle logout locally
   return { success: true };
 };
@@ -61,26 +61,26 @@ const fetchUser = async (token) => {
   if (!token) {
     throw new Error("No token provided");
   }
-  
+
   // Check if token is expired before making the request
   if (isTokenExpired(token)) {
     throw new Error("Token is expired");
   }
-  
+
   try {
     const response = await axios.get(`${API_BASE}/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    
+
     // Handle different response structures
     const userData = response.data.user || response.data;
-    
+
     if (!userData) {
       throw new Error("No user data received from server");
     }
-    
+
     return userData;
   } catch (error) {
     console.error("Error fetching user:", error);
