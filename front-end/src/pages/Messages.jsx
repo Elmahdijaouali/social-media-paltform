@@ -2,10 +2,12 @@ import { useState } from "react"
 import ContactsSidebar from "@/components/chat/Contacts-sidebar"
 import ChatBox from "@/components/chat/Chat-box"
 import avatar0 from "../imgs/user.png"
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline"
 
 export default function ChatPage() {
   const [selectedChat, setSelectedChat] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const [showSidebar, setShowSidebar] = useState(false)
 
   const contacts = [
     {
@@ -131,19 +133,67 @@ export default function ChatPage() {
     console.log("New message object:", newMessage)
   }
 
+  // Handle delete for me - completely remove the message
+  const handleDeleteForMe = (messageId) => {
+    console.log(`Delete message ${messageId} for me`)
+    setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageId))
+    // In a real app, you would call your backend API
+  }
+
+  // Handle delete for everyone - replace with placeholder
+  const handleDeleteForEveryone = (messageId) => {
+    console.log(`Delete message ${messageId} for everyone`)
+    setMessages(prevMessages => 
+      prevMessages.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, deleted: true, text: "This message was deleted", files: undefined }
+          : msg
+      )
+    )
+    // In a real app, you would call your backend API
+  }
+
   const selectedContact = contacts[selectedChat] || null
 
-  return (
-    <div className="flex h-[calc(100vh-5rem)] bg-gray-50">
-      <ContactsSidebar
-        contacts={contacts}
-        selectedChat={selectedChat}
-        onSelectChat={setSelectedChat}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+  // Handle contact selection - close sidebar on mobile
+  const handleSelectChat = (index) => {
+    setSelectedChat(index)
+    setShowSidebar(false) // Close sidebar on mobile when selecting a chat
+  }
 
-      <ChatBox selectedContact={selectedContact} messages={messages} onSendMessage={handleSendMessage} />
+  return (
+    <div className="flex h-[calc(100dvh-4rem)] md:h-[calc(100vh-5rem)] bg-gray-50">
+      {/* Contacts Sidebar - Hidden on mobile unless toggled */}
+      <div className={`${showSidebar ? 'block' : 'hidden'} md:block absolute md:relative z-30 w-full md:w-auto h-full`}>
+        <ContactsSidebar
+          contacts={contacts}
+          selectedChat={selectedChat}
+          onSelectChat={handleSelectChat}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onClose={() => setShowSidebar(false)}
+        />
+      </div>
+
+      {/* Chat Box - Full width on mobile when sidebar is hidden */}
+      <div className={`${showSidebar ? 'hidden' : 'block'} md:block flex-1 h-full`}>
+        <ChatBox 
+          selectedContact={selectedContact} 
+          messages={messages} 
+          onSendMessage={handleSendMessage}
+          onDeleteForMe={handleDeleteForMe}
+          onDeleteForEveryone={handleDeleteForEveryone}
+          onToggleSidebar={() => setShowSidebar(true)}
+        />
+      </div>
+
+      {/* Mobile Overlay - Close sidebar when clicking outside */}
+      {showSidebar && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-20"
+          onClick={() => setShowSidebar(false)}
+        />
+      )}
     </div>
   )
 }
