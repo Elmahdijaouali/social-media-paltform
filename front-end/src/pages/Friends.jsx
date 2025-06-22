@@ -16,15 +16,27 @@ import {
   FunnelIcon,
   Squares2X2Icon,
   ListBulletIcon,
+  ViewColumnsIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline"
 import FriendCard from "@/components/Friends/Friend-card"
 
 export default function FriendsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState("all") // all, online, offline
-  const [viewMode, setViewMode] = useState("grid") // grid, list
+  const [viewMode, setViewMode] = useState("grid") // grid, compact, list
 
-  const friends = [
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+
+  // Total counts from backend (separate from paginated data)
+  const [totalFriendsCount, setTotalFriendsCount] = useState(15) // Total friends in database
+  const [totalOnlineFriendsCount, setTotalOnlineFriendsCount] = useState(8) // Total online friends in database
+
+  // Initial friends data (simulating first page from backend)
+  const [friends, setFriends] = useState([
     {
       id: 1,
       username: "Jennifer Fritz",
@@ -79,25 +91,105 @@ export default function FriendsList() {
       lastSeen: "2 days ago",
       mutualFriends: 4,
     },
-    {
-      id: 7,
-      username: "Timothy Gunter",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: true,
-      lastSeen: "30 minutes ago",
-      mutualFriends: 9,
-    },
-    {
-      id: 8,
-      username: "Jakill Kyle",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: false,
-      lastSeen: "1 week ago",
-      mutualFriends: 11,
-    },
-  ]
+  ])
+
+  // Simulate additional friends data for pagination
+  const getMoreFriends = (page) => {
+    const additionalFriends = [
+      // Page 2
+      [
+        {
+          id: 7,
+          username: "Timothy Gunter",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: true,
+          lastSeen: "30 minutes ago",
+          mutualFriends: 9,
+        },
+        {
+          id: 8,
+          username: "Jakill Kyle",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: false,
+          lastSeen: "1 week ago",
+          mutualFriends: 11,
+        },
+        {
+          id: 9,
+          username: "Sarah Wilson",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: true,
+          lastSeen: "1 hour ago",
+          mutualFriends: 7,
+        },
+        {
+          id: 10,
+          username: "Mike Johnson",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: false,
+          lastSeen: "3 days ago",
+          mutualFriends: 14,
+        },
+      ],
+      // Page 3
+      [
+        {
+          id: 11,
+          username: "Emma Davis",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: true,
+          lastSeen: "15 minutes ago",
+          mutualFriends: 18,
+        },
+        {
+          id: 12,
+          username: "Alex Brown",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: false,
+          lastSeen: "2 hours ago",
+          mutualFriends: 5,
+        },
+        {
+          id: 13,
+          username: "Lisa Anderson",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: true,
+          lastSeen: "Just now",
+          mutualFriends: 22,
+        },
+      ],
+      // Page 4 (last page)
+      [
+        {
+          id: 14,
+          username: "David Miller",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: false,
+          lastSeen: "5 hours ago",
+          mutualFriends: 3,
+        },
+        {
+          id: 15,
+          username: "Rachel Green",
+          profileImage: "/placeholder.svg?height=80&width=80",
+          coverImage: "/placeholder.svg?height=128&width=400",
+          isOnline: true,
+          lastSeen: "2 minutes ago",
+          mutualFriends: 16,
+        },
+      ],
+    ]
+
+    return additionalFriends[page - 2] || []
+  }
 
   const filteredFriends = friends.filter((friend) => {
     const matchesSearch = friend.username.toLowerCase().includes(searchQuery.toLowerCase())
@@ -118,7 +210,57 @@ export default function FriendsList() {
     // Navigate to chat or open message modal
   }
 
-  const onlineFriendsCount = friends.filter((friend) => friend.isOnline).length
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return
+
+    setIsLoadingMore(true)
+
+    try {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      // In a real app, these totals would come from the backend response
+      // and might change if new friends come online/offline
+      // setTotalFriendsCount(response.totalCount)
+      // setTotalOnlineFriendsCount(response.totalOnlineCount)
+
+      const nextPage = currentPage + 1
+      const newFriends = getMoreFriends(nextPage)
+
+      if (newFriends.length > 0) {
+        setFriends((prevFriends) => [...prevFriends, ...newFriends])
+        setCurrentPage(nextPage)
+
+        // Check if this was the last page (simulate backend response)
+        if (nextPage >= 4) {
+          setHasMore(false)
+        }
+      } else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error("Error loading more friends:", error)
+      // Handle error (show toast, etc.)
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
+
+  // Remove this line:
+  // const onlineFriendsCount = friends.filter((friend) => friend.isOnline).length
+
+  // The onlineFriendsCount is now totalOnlineFriendsCount from state
+
+  // Determine grid classes based on view mode and screen size
+  const getGridClasses = () => {
+    if (viewMode === "list") {
+      return "space-y-3 sm:space-y-4"
+    } else if (viewMode === "compact") {
+      return "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7"
+    } else {
+      return "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -129,31 +271,44 @@ export default function FriendsList() {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Friends</h1>
               <p className="text-sm sm:text-base text-gray-600">
-                {friends.length} friends • {onlineFriendsCount} online
+                {totalFriendsCount} friends • {totalOnlineFriendsCount} online
               </p>
             </div>
             <div className="flex items-center space-x-3 sm:space-x-4">
-              {/* View Toggle - Only visible on mobile */}
-              <div className="flex sm:hidden bg-white rounded-lg border border-gray-200 p-1">
+              {/* View Toggle - Now visible on all screen sizes */}
+              <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-md transition-colors duration-200 ${
+                  className={`p-2 sm:p-2.5 rounded-md transition-colors duration-200 ${
                     viewMode === "grid"
                       ? "bg-blue text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
+                  title="Grid View"
                 >
-                  <Squares2X2Icon className="w-4 h-4" />
+                  <Squares2X2Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("compact")}
+                  className={`p-2 sm:p-2.5 rounded-md transition-colors duration-200 ${
+                    viewMode === "compact"
+                      ? "bg-blue text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  }`}
+                  title="Compact Grid"
+                >
+                  <ViewColumnsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-md transition-colors duration-200 ${
+                  className={`p-2 sm:p-2.5 rounded-md transition-colors duration-200 ${
                     viewMode === "list"
                       ? "bg-blue text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
+                  title="List View"
                 >
-                  <ListBulletIcon className="w-4 h-4" />
+                  <ListBulletIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
@@ -195,20 +350,14 @@ export default function FriendsList() {
 
         {/* Friends Grid/List */}
         {filteredFriends.length > 0 ? (
-          <div
-            className={`transition-all duration-300 ${
-              viewMode === "list"
-                ? "space-y-3 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0 lg:grid-cols-3 xl:grid-cols-4"
-                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
-            }`}
-          >
+          <div className={`transition-all duration-300 ${getGridClasses()}`}>
             {filteredFriends.map((friend) => (
               <FriendCard
                 key={friend.id}
                 friend={friend}
                 onSeeProfile={handleSeeProfile}
                 onSendMessage={handleSendMessage}
-                viewMode={viewMode === "list" && window.innerWidth < 640 ? "list" : "grid"}
+                viewMode={viewMode}
               />
             ))}
           </div>
@@ -236,25 +385,39 @@ export default function FriendsList() {
           </div>
         )}
 
-        {/* Stats Footer */}
-        <div className="mt-8 sm:mt-12 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
-            <div>
-              <div className="text-xl sm:text-2xl font-bold text-purple mb-1">{friends.length}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Total Friends</div>
-            </div>
-            <div>
-              <div className="text-xl sm:text-2xl font-bold text-blue mb-1">{onlineFriendsCount}</div>
-              <div className="text-xs sm:text-sm text-gray-600">Online Now</div>
-            </div>
-            <div>
-              <div className="text-xl sm:text-2xl font-bold text-lightpurple mb-1">
-                {Math.round(friends.reduce((acc, friend) => acc + (friend.mutualFriends || 0), 0) / friends.length)}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">Avg. Mutual Friends</div>
+        {/* Load More Button */}
+        {filteredFriends.length > 0 && hasMore && (
+          <div className="mt-8 sm:mt-12 text-center">
+            <button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple to-blue hover:from-lightpurple hover:to-lightblue text-white font-medium rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
+            >
+              {isLoadingMore ? (
+                <>
+                  <ArrowPathIcon className="w-5 h-5 sm:w-6 sm:h-6 mr-2 animate-spin" />
+                  Loading more friends...
+                </>
+              ) : (
+                <>
+                  <UserGroupIcon className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                  Load More Friends
+                </>
+              )}
+            </button>
+            <p className="text-xs sm:text-sm text-gray-500 mt-2">Showing {filteredFriends.length} friends</p>
+          </div>
+        )}
+
+        {/* End of Results Message */}
+        {filteredFriends.length > 0 && !hasMore && (
+          <div className="mt-8 sm:mt-12 text-center">
+            <div className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-100 text-gray-600 rounded-lg sm:rounded-xl text-sm sm:text-base">
+              <UserGroupIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              You've seen all your friends ({friends.length} total)
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
