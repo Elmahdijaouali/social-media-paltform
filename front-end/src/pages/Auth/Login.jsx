@@ -4,7 +4,7 @@ import Input from "@/components/ui/Input"
 import Checkbox from "@/components/ui/Checkbox"
 import Alert from "@/components/ui/Alert"
 import IconButton from "@/components/ui/IconButton"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthProvider"
 
 export default function LoginForm({ onSwitchToSignup }) {
@@ -14,9 +14,17 @@ export default function LoginForm({ onSwitchToSignup }) {
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
-  const { login, loginStatus, loginError, signupSuccessMessage, clearSignupSuccessMessage } = useAuth()
+  const { login, loginStatus, loginError, signupSuccessMessage, clearSignupSuccessMessage, user } = useAuth()
+  const navigate = useNavigate();
   
   const isLoading = loginStatus === "pending"
+
+  useEffect(() => {
+    // Redirect if user is logged in
+    if (user) {
+      navigate("/app/home");
+    }
+  }, [user, navigate]);
 
   // Auto-clear success message after 20 seconds
   useEffect(() => {
@@ -96,6 +104,7 @@ export default function LoginForm({ onSwitchToSignup }) {
       console.log('loginError.message:', loginError.message)
     }
   }, [loginError])
+
   
   // Get user-friendly error message
   const getUserFriendlyError = () => {
