@@ -218,7 +218,7 @@ const Header = () => {
               {dropdownOpen && (
                 <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl bg-white ring-1 ring-gray-100 focus:outline-none p-2 z-50">
                   <Link
-                    to="/user-profile"
+                    to="/app/user-profile"
                     className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-all duration-200"
                   >
                     <svg

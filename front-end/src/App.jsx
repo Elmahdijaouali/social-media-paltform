@@ -7,17 +7,39 @@ import Home from "./pages/Home";
 import Messages from "./pages/Messages";
 import Friends from "./pages/Friends";
 import GeneralLayout from "./layouts/GeneralLayout";
+import { PrivateRoute, PublicRoute } from "./components/PrivateRoute";
 
 const App = () => {
   return (
     <>
       <Routes>
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/signup" element={<SignupForm />} />
-        <Route path="/user-profile" element={<UserProfile />} />
-        <Route path="/app" element={<GeneralLayout />}>
+        <Route
+          path="/"
+          element={
+            <PublicRoute>
+              <LoginForm />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignupForm />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/app"
+          element={
+            <PrivateRoute>
+              <GeneralLayout />
+            </PrivateRoute>
+          }
+        >
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<Home />} />
+          <Route path="user-profile" element={<UserProfile />} />
           <Route path="messages" element={<Messages />} />
           <Route path="friends" element={<Friends />} />
         </Route>
