@@ -244,22 +244,12 @@ export default function ChatBox({ selectedContact, messages, onSendMessage, onDe
                               <div key={fileIndex}>
                                 {file.type.startsWith('image/') ? (
                                   // Display images in full form
-                                  <div className="space-y-1">
-                                    <img
-                                      src={file.url}
-                                      alt={file.name}
-                                      className="max-w-full rounded-lg object-contain"
-                                      style={{ maxHeight: '300px' }}
-                                    />
-                                    <div className="flex items-center justify-between text-xs">
-                                      <span className={`truncate ${
-                                        msg.sender === "me" ? "text-white text-opacity-80" : "text-gray-500"
-                                      }`}>{file.name}</span>
-                                      <span className={`${
-                                        msg.sender === "me" ? "text-white text-opacity-60" : "text-gray-400"
-                                      }`}>{formatFileSize(file.size)}</span>
-                                    </div>
-                                  </div>
+                                  <img
+                                    src={file.url}
+                                    alt={file.name}
+                                    className="max-w-full rounded-lg object-contain"
+                                    style={{ maxHeight: '300px' }}
+                                  />
                                 ) : (
                                   // Display other files as compact attachments
                                   <div className={`flex items-center space-x-1 sm:space-x-2 p-1 sm:p-2 rounded-lg ${
