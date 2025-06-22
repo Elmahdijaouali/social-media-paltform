@@ -40,33 +40,25 @@ export default function ChatBox({ selectedContact, messages, onSendMessage, onDe
         const uploadedFiles = []
         if (selectedFiles.length > 0) {
           for (const file of selectedFiles) {
-            const formData = new FormData()
-            formData.append('file', file)
+            // For demonstration purposes, create a mock URL
+            // In a real app, you would upload to your backend endpoint
+            const mockUrl = URL.createObjectURL(file)
             
-            // Upload to your backend endpoint
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              body: formData,
+            uploadedFiles.push({
+              name: file.name,
+              url: mockUrl,
+              type: file.type,
+              size: file.size
             })
-            
-            if (response.ok) {
-              const result = await response.json()
-              uploadedFiles.push({
-                name: file.name,
-                url: result.url,
-                type: file.type,
-                size: file.size
-              })
-            }
           }
         }
 
         // Send message with files
         onSendMessage(message, uploadedFiles)
-      setMessage("")
+        setMessage("")
         setSelectedFiles([])
       } catch (error) {
-        console.error('Error uploading files:', error)
+        console.error('Error handling files:', error)
         // Handle error - maybe show a toast notification
       } finally {
         setIsUploading(false)
@@ -238,48 +230,75 @@ export default function ChatBox({ selectedContact, messages, onSendMessage, onDe
                         ? "bg-gray-100 text-gray-500 italic"
                         : msg.sender === "me"
                           ? "bg-purple text-white"
-                          : msg.isFile
-                            ? "bg-red-500 text-white"
-                            : "bg-white text-gray-900 shadow-sm border border-gray-200"
+                          : "bg-white text-gray-900 shadow-sm border border-gray-200"
                     }`}
                   >
                     {msg.deleted ? (
                       <p className="text-xs sm:text-sm italic break-words">{msg.text}</p>
-                    ) : msg.isFile ? (
-                      <div className="flex items-center space-x-1 sm:space-x-2">
-                        <PaperClipIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                        <span className="text-xs sm:text-sm break-words">{msg.text}</span>
-                      </div>
                     ) : (
                       <>
                         {msg.text && <p className="text-xs sm:text-sm break-words leading-relaxed">{msg.text}</p>}
                         {msg.files && msg.files.length > 0 && (
                           <div className="mt-2 space-y-1 sm:space-y-2">
                             {msg.files.map((file, fileIndex) => (
-                              <div key={fileIndex} className="flex items-center space-x-1 sm:space-x-2 p-1 sm:p-2 bg-gray-100 rounded-lg">
+                              <div key={fileIndex}>
                                 {file.type.startsWith('image/') ? (
-                                  <img
-                                    src={file.url}
-                                    alt={file.name}
-                                    className="w-8 h-8 sm:w-12 sm:h-12 object-cover rounded flex-shrink-0"
-                                  />
+                                  // Display images in full form
+                                  <div className="space-y-1">
+                                    <img
+                                      src={file.url}
+                                      alt={file.name}
+                                      className="max-w-full rounded-lg object-contain"
+                                      style={{ maxHeight: '300px' }}
+                                    />
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className={`truncate ${
+                                        msg.sender === "me" ? "text-white text-opacity-80" : "text-gray-500"
+                                      }`}>{file.name}</span>
+                                      <span className={`${
+                                        msg.sender === "me" ? "text-white text-opacity-60" : "text-gray-400"
+                                      }`}>{formatFileSize(file.size)}</span>
+                                    </div>
+                                  </div>
                                 ) : (
-                                  <PaperClipIcon className="w-4 h-4 sm:w-6 sm:h-6 text-gray-500 flex-shrink-0" />
+                                  // Display other files as compact attachments
+                                  <div className={`flex items-center space-x-1 sm:space-x-2 p-1 sm:p-2 rounded-lg ${
+                                    msg.sender === "me" ? "bg-white bg-opacity-20" : "bg-gray-100"
+                                  }`}>
+                                    <PaperClipIcon className={`w-4 h-4 sm:w-6 sm:h-6 flex-shrink-0 ${
+                                      msg.sender === "me" ? "text-white" : "text-gray-500"
+                                    }`} />
+                                    <div className="flex-1 min-w-0">
+                                      <p className={`text-xs font-medium truncate ${
+                                        msg.sender === "me" ? "text-white" : "text-gray-900"
+                                      }`}>{file.name}</p>
+                                      <p className={`text-xs ${
+                                        msg.sender === "me" ? "text-white text-opacity-80" : "text-gray-500"
+                                      }`}>{formatFileSize(file.size)}</p>
+                                    </div>
+                                    <a
+                                      href={file.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`text-xs hover:underline flex-shrink-0 ${
+                                        msg.sender === "me" ? "text-white text-opacity-90" : "text-blue-500"
+                                      }`}
+                                    >
+                                      View
+                                    </a>
+                                  </div>
                                 )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-medium truncate">{file.name}</p>
-                                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                                </div>
-                                <a
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-xs text-blue-500 hover:underline flex-shrink-0"
-                                >
-                                  View
-                                </a>
                               </div>
                             ))}
+                          </div>
+                        )}
+                        {/* Handle legacy isFile messages */}
+                        {msg.isFile && !msg.files && (
+                          <div className="flex items-center space-x-1 sm:space-x-2">
+                            <PaperClipIcon className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${
+                              msg.sender === "me" ? "text-white" : "text-gray-500"
+                            }`} />
+                            <span className="text-xs sm:text-sm break-words">{msg.text}</span>
                           </div>
                         )}
                       </>

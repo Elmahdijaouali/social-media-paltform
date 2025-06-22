@@ -7,9 +7,7 @@
 // export default Friends;
 
 
-
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   MagnifyingGlassIcon,
   UserGroupIcon,
@@ -29,176 +27,250 @@ export default function FriendsList() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [isFiltering, setIsFiltering] = useState(false)
   const [hasMore, setHasMore] = useState(true)
 
-  // Total counts from backend (separate from paginated data)
-  const [totalFriendsCount, setTotalFriendsCount] = useState(15) // Total friends in database
-  const [totalOnlineFriendsCount, setTotalOnlineFriendsCount] = useState(8) // Total online friends in database
+  // Total counts from backend (updated based on current filter)
+  const [totalFriendsCount, setTotalFriendsCount] = useState(15) // Total friends matching current filter
+  const [totalOnlineFriendsCount, setTotalOnlineFriendsCount] = useState(8) // Total online friends matching current filter
 
-  // Initial friends data (simulating first page from backend)
-  const [friends, setFriends] = useState([
-    {
-      id: 1,
-      username: "Jennifer Fritz",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: true,
-      lastSeen: "2 hours ago",
-      mutualFriends: 12,
-    },
-    {
-      id: 2,
-      username: "Laney Gray",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: false,
-      lastSeen: "1 day ago",
-      mutualFriends: 8,
-    },
-    {
-      id: 3,
-      username: "Oscar Thomson",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: true,
-      lastSeen: "5 minutes ago",
-      mutualFriends: 15,
-    },
-    {
-      id: 4,
-      username: "Kendra Lord",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: false,
-      lastSeen: "3 hours ago",
-      mutualFriends: 6,
-    },
-    {
-      id: 5,
-      username: "Gatlin Huber",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: true,
-      lastSeen: "Just now",
-      mutualFriends: 20,
-    },
-    {
-      id: 6,
-      username: "Fox Mccloud",
-      profileImage: "/placeholder.svg?height=80&width=80",
-      coverImage: "/placeholder.svg?height=128&width=400",
-      isOnline: false,
-      lastSeen: "2 days ago",
-      mutualFriends: 4,
-    },
-  ])
+  // Friends data (gets reset when filter changes)
+  const [friends, setFriends] = useState([])
 
-  // Simulate additional friends data for pagination
-  const getMoreFriends = (page) => {
-    const additionalFriends = [
-      // Page 2
-      [
-        {
-          id: 7,
-          username: "Timothy Gunter",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: true,
-          lastSeen: "30 minutes ago",
-          mutualFriends: 9,
-        },
-        {
-          id: 8,
-          username: "Jakill Kyle",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: false,
-          lastSeen: "1 week ago",
-          mutualFriends: 11,
-        },
-        {
-          id: 9,
-          username: "Sarah Wilson",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: true,
-          lastSeen: "1 hour ago",
-          mutualFriends: 7,
-        },
-        {
-          id: 10,
-          username: "Mike Johnson",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: false,
-          lastSeen: "3 days ago",
-          mutualFriends: 14,
-        },
-      ],
-      // Page 3
-      [
-        {
-          id: 11,
-          username: "Emma Davis",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: true,
-          lastSeen: "15 minutes ago",
-          mutualFriends: 18,
-        },
-        {
-          id: 12,
-          username: "Alex Brown",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: false,
-          lastSeen: "2 hours ago",
-          mutualFriends: 5,
-        },
-        {
-          id: 13,
-          username: "Lisa Anderson",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: true,
-          lastSeen: "Just now",
-          mutualFriends: 22,
-        },
-      ],
-      // Page 4 (last page)
-      [
-        {
-          id: 14,
-          username: "David Miller",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: false,
-          lastSeen: "5 hours ago",
-          mutualFriends: 3,
-        },
-        {
-          id: 15,
-          username: "Rachel Green",
-          profileImage: "/placeholder.svg?height=80&width=80",
-          coverImage: "/placeholder.svg?height=128&width=400",
-          isOnline: true,
-          lastSeen: "2 minutes ago",
-          mutualFriends: 16,
-        },
-      ],
+  // Simulate backend API call with filters
+  const fetchFriends = async (page = 1, search = "", status = "all", resetData = false) => {
+    // Simulate all friends data in "database"
+    const allFriendsInDB = [
+      {
+        id: 1,
+        username: "Jennifer Fritz",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "2 hours ago",
+        mutualFriends: 12,
+      },
+      {
+        id: 2,
+        username: "Laney Gray",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "1 day ago",
+        mutualFriends: 8,
+      },
+      {
+        id: 3,
+        username: "Oscar Thomson",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "5 minutes ago",
+        mutualFriends: 15,
+      },
+      {
+        id: 4,
+        username: "Kendra Lord",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "3 hours ago",
+        mutualFriends: 6,
+      },
+      {
+        id: 5,
+        username: "Gatlin Huber",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "Just now",
+        mutualFriends: 20,
+      },
+      {
+        id: 6,
+        username: "Fox Mccloud",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "2 days ago",
+        mutualFriends: 4,
+      },
+      {
+        id: 7,
+        username: "Timothy Gunter",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "30 minutes ago",
+        mutualFriends: 9,
+      },
+      {
+        id: 8,
+        username: "Jakill Kyle",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "1 week ago",
+        mutualFriends: 11,
+      },
+      {
+        id: 9,
+        username: "Sarah Wilson",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "1 hour ago",
+        mutualFriends: 7,
+      },
+      {
+        id: 10,
+        username: "Mike Johnson",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "3 days ago",
+        mutualFriends: 14,
+      },
+      {
+        id: 11,
+        username: "Emma Davis",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "15 minutes ago",
+        mutualFriends: 18,
+      },
+      {
+        id: 12,
+        username: "Alex Brown",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "2 hours ago",
+        mutualFriends: 5,
+      },
+      {
+        id: 13,
+        username: "Lisa Anderson",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "Just now",
+        mutualFriends: 22,
+      },
+      {
+        id: 14,
+        username: "David Miller",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: false,
+        lastSeen: "5 hours ago",
+        mutualFriends: 3,
+      },
+      {
+        id: 15,
+        username: "Rachel Green",
+        profileImage: "/placeholder.svg?height=80&width=80",
+        coverImage: "/placeholder.svg?height=128&width=400",
+        isOnline: true,
+        lastSeen: "2 minutes ago",
+        mutualFriends: 16,
+      },
     ]
 
-    return additionalFriends[page - 2] || []
+    // Apply server-side filtering
+    let filteredData = allFriendsInDB
+
+    // Filter by search query
+    if (search.trim()) {
+      filteredData = filteredData.filter(
+        (friend) =>
+          friend.username.toLowerCase().includes(search.toLowerCase()) ||
+          friend.lastSeen.toLowerCase().includes(search.toLowerCase()),
+      )
+    }
+
+    // Filter by online status
+    if (status === "online") {
+      filteredData = filteredData.filter((friend) => friend.isOnline)
+    } else if (status === "offline") {
+      filteredData = filteredData.filter((friend) => !friend.isOnline)
+    }
+
+    // Calculate totals for current filter
+    const totalCount = filteredData.length
+    const totalOnlineCount = filteredData.filter((friend) => friend.isOnline).length
+
+    // Paginate the filtered data (6 items per page)
+    const itemsPerPage = 6
+    const startIndex = (page - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    const paginatedData = filteredData.slice(startIndex, endIndex)
+
+    // Determine if there are more pages
+    const hasMorePages = endIndex < filteredData.length
+
+    return {
+      friends: paginatedData,
+      totalCount,
+      totalOnlineCount,
+      hasMore: hasMorePages,
+      currentPage: page,
+    }
   }
 
-  const filteredFriends = friends.filter((friend) => {
-    const matchesSearch = friend.username.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "online" && friend.isOnline) ||
-      (filterStatus === "offline" && !friend.isOnline)
-    return matchesSearch && matchesFilter
-  })
+  // Load initial data
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsFiltering(true)
+      try {
+        const result = await fetchFriends(1, searchQuery, filterStatus, true)
+        setFriends(result.friends)
+        setTotalFriendsCount(result.totalCount)
+        setTotalOnlineFriendsCount(result.totalOnlineCount)
+        setHasMore(result.hasMore)
+        setCurrentPage(1)
+      } catch (error) {
+        console.error("Error loading initial data:", error)
+      } finally {
+        setIsFiltering(false)
+      }
+    }
+
+    loadInitialData()
+  }, []) // Only run on mount
+
+  // Handle filter/search changes
+  useEffect(() => {
+    const applyFilters = async () => {
+      setIsFiltering(true)
+      try {
+        // Simulate API delay
+        await new Promise((resolve) => setTimeout(resolve, 800))
+
+        const result = await fetchFriends(1, searchQuery, filterStatus, true)
+        setFriends(result.friends) // Reset friends data
+        setTotalFriendsCount(result.totalCount)
+        setTotalOnlineFriendsCount(result.totalOnlineCount)
+        setHasMore(result.hasMore)
+        setCurrentPage(1) // Reset to first page
+      } catch (error) {
+        console.error("Error applying filters:", error)
+      } finally {
+        setIsFiltering(false)
+      }
+    }
+
+    // Debounce search queries
+    const timeoutId = setTimeout(
+      () => {
+        applyFilters()
+      },
+      searchQuery ? 500 : 0,
+    ) // 500ms delay for search, immediate for filter
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, filterStatus])
 
   const handleSeeProfile = (friend) => {
     console.log("See profile for:", friend.username)
@@ -211,7 +283,7 @@ export default function FriendsList() {
   }
 
   const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return
+    if (isLoadingMore || !hasMore || isFiltering) return
 
     setIsLoadingMore(true)
 
@@ -219,37 +291,25 @@ export default function FriendsList() {
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      // In a real app, these totals would come from the backend response
-      // and might change if new friends come online/offline
-      // setTotalFriendsCount(response.totalCount)
-      // setTotalOnlineFriendsCount(response.totalOnlineCount)
-
       const nextPage = currentPage + 1
-      const newFriends = getMoreFriends(nextPage)
+      const result = await fetchFriends(nextPage, searchQuery, filterStatus, false)
 
-      if (newFriends.length > 0) {
-        setFriends((prevFriends) => [...prevFriends, ...newFriends])
+      if (result.friends.length > 0) {
+        setFriends((prevFriends) => [...prevFriends, ...result.friends])
         setCurrentPage(nextPage)
-
-        // Check if this was the last page (simulate backend response)
-        if (nextPage >= 4) {
-          setHasMore(false)
-        }
+        setHasMore(result.hasMore)
+        // Update totals in case they changed
+        setTotalFriendsCount(result.totalCount)
+        setTotalOnlineFriendsCount(result.totalOnlineCount)
       } else {
         setHasMore(false)
       }
     } catch (error) {
       console.error("Error loading more friends:", error)
-      // Handle error (show toast, etc.)
     } finally {
       setIsLoadingMore(false)
     }
   }
-
-  // Remove this line:
-  // const onlineFriendsCount = friends.filter((friend) => friend.isOnline).length
-
-  // The onlineFriendsCount is now totalOnlineFriendsCount from state
 
   // Determine grid classes based on view mode and screen size
   const getGridClasses = () => {
@@ -271,7 +331,14 @@ export default function FriendsList() {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Friends</h1>
               <p className="text-sm sm:text-base text-gray-600">
-                {totalFriendsCount} friends • {totalOnlineFriendsCount} online
+                {isFiltering ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  <>
+                    {totalFriendsCount} friends • {totalOnlineFriendsCount} online
+                    {(searchQuery || filterStatus !== "all") && <span className="text-blue ml-1">(filtered)</span>}
+                  </>
+                )}
               </p>
             </div>
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -329,7 +396,13 @@ export default function FriendsList() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white border border-gray-200 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent shadow-sm text-sm sm:text-base"
+                disabled={isFiltering}
               />
+              {isFiltering && (
+                <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2">
+                  <ArrowPathIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 animate-spin" />
+                </div>
+              )}
             </div>
 
             {/* Filter */}
@@ -337,7 +410,8 @@ export default function FriendsList() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 pr-8 sm:pr-10 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent shadow-sm cursor-pointer text-sm sm:text-base"
+                className="appearance-none bg-white border border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 pr-8 sm:pr-10 focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent shadow-sm cursor-pointer text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isFiltering}
               >
                 <option value="all">All Friends</option>
                 <option value="online">Online Only</option>
@@ -349,9 +423,17 @@ export default function FriendsList() {
         </div>
 
         {/* Friends Grid/List */}
-        {filteredFriends.length > 0 ? (
+        {isFiltering ? (
+          <div className="text-center py-12 sm:py-16">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-full mx-auto mb-4 sm:mb-6 flex items-center justify-center">
+              <ArrowPathIcon className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 animate-spin" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">Searching friends...</h3>
+            <p className="text-gray-500">Please wait while we find your friends</p>
+          </div>
+        ) : friends.length > 0 ? (
           <div className={`transition-all duration-300 ${getGridClasses()}`}>
-            {filteredFriends.map((friend) => (
+            {friends.map((friend) => (
               <FriendCard
                 key={friend.id}
                 friend={friend}
@@ -374,19 +456,22 @@ export default function FriendsList() {
                   ? "No friends are currently online"
                   : "No offline friends found"}
             </p>
-            {searchQuery && (
+            {(searchQuery || filterStatus !== "all") && (
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("")
+                  setFilterStatus("all")
+                }}
                 className="px-4 sm:px-6 py-2 bg-blue text-white rounded-lg hover:bg-lightblue transition-colors text-sm sm:text-base"
               >
-                Clear Search
+                Clear Filters
               </button>
             )}
           </div>
         )}
 
         {/* Load More Button */}
-        {filteredFriends.length > 0 && hasMore && (
+        {friends.length > 0 && hasMore && !isFiltering && (
           <div className="mt-8 sm:mt-12 text-center">
             <button
               onClick={handleLoadMore}
@@ -405,16 +490,18 @@ export default function FriendsList() {
                 </>
               )}
             </button>
-            <p className="text-xs sm:text-sm text-gray-500 mt-2">Showing {filteredFriends.length} friends</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-2">
+              Showing {friends.length} of {totalFriendsCount} friends
+            </p>
           </div>
         )}
 
         {/* End of Results Message */}
-        {filteredFriends.length > 0 && !hasMore && (
+        {friends.length > 0 && !hasMore && !isFiltering && (
           <div className="mt-8 sm:mt-12 text-center">
             <div className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 bg-gray-100 text-gray-600 rounded-lg sm:rounded-xl text-sm sm:text-base">
               <UserGroupIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              You've seen all your friends ({friends.length} total)
+              You've seen all matching friends ({friends.length} total)
             </div>
           </div>
         )}
